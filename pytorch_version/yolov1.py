@@ -3,15 +3,18 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 
+from pytorch_version.torchsummary.torchsummary import summary
+
 # Device configuration
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Hyper parameters
 num_epochs = 100
-num_classes = 10
+num_classes = 20
 batch_size = 128
 learning_rate = 0.001
 
+"""
 # MNIST dataset
 train_dataset = torchvision.datasets.CIFAR10(root='./data/',
                                            train=True,
@@ -31,20 +34,20 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
                                           batch_size=batch_size,
                                           shuffle=False)
 
-
+"""
 # Convolutional neural network (two convolutional layers)
 class YOLOv1(nn.Module):
     def __init__(self):
         super(YOLOv1, self).__init__()
         # LAYER 1
         self.layer1 = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0),
+            nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
         # LAYER 2
         self.layer2 = nn.Sequential(
-            nn.Conv2d(64, 192, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(64, 192, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
@@ -53,10 +56,10 @@ class YOLOv1(nn.Module):
             nn.Conv2d(192, 128, kernel_size=1, stride=1, padding=0),
             nn.ReLU())
         self.layer4 = nn.Sequential(
-            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
         self.layer5 = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(256, 256, kernel_size=1, stride=1, padding=1),
             nn.ReLU())
         self.layer6 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=0),
@@ -68,31 +71,31 @@ class YOLOv1(nn.Module):
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
             nn.ReLU())
         self.layer8 = nn.Sequential(
-            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
         self.layer9 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
             nn.ReLU())
         self.layer10 = nn.Sequential(
-            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
         self.layer11 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
             nn.ReLU())
         self.layer12 = nn.Sequential(
-            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
         self.layer13 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
             nn.ReLU())
         self.layer14 = nn.Sequential(
-            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
         self.layer15 = nn.Sequential(
             nn.Conv2d(512, 512, kernel_size=1, stride=1, padding=0),
             nn.ReLU())
         self.layer16 = nn.Sequential(
-            nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
@@ -101,27 +104,27 @@ class YOLOv1(nn.Module):
             nn.Conv2d(1024, 512, kernel_size=1, stride=1, padding=0),
             nn.ReLU())
         self.layer18 = nn.Sequential(
-            nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
         self.layer19 = nn.Sequential(
             nn.Conv2d(1024, 512, kernel_size=1, stride=1, padding=0),
             nn.ReLU())
         self.layer20 = nn.Sequential(
-            nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
         self.layer21 = nn.Sequential(
-            nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
         self.layer22 = nn.Sequential(
-            nn.Conv2d(1024, 1024, kernel_size=3, stride=2, padding=0),
+            nn.Conv2d(1024, 1024, kernel_size=3, stride=2, padding=1),
             nn.ReLU())
 
         # LAYER 6
         self.layer23 = nn.Sequential(
-            nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
         self.layer24 = nn.Sequential(
-            nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
             nn.ReLU())
 
         self.fc1 = nn.Sequential(
@@ -130,8 +133,8 @@ class YOLOv1(nn.Module):
         )
 
         self.fc2 = nn.Sequential(
-            nn.Linear(4096, 7*7*((2*5)+num_classes)),
-            nn.Dropout()
+            nn.Linear(4096, 7*7*((5+5)+num_classes)),
+            nn.Dropout(),
         )
 
 
@@ -163,12 +166,17 @@ class YOLOv1(nn.Module):
         out = out.reshape(out.size(0), -1)
         out = self.fc1(out)
         out = self.fc2(out)
-        out = out.reshape(out.size(0), (7,7,30))
+        out = out.reshape((-1,7,7,30), 1)
+
         return out
 
 
-model = YOLOv1(num_classes).to(device)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = YOLOv1().to(device)
 
+summary(model, (3, 448,448))
+
+"""
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -210,3 +218,4 @@ with torch.no_grad():
 
 # Save the model checkpoint
 torch.save(model.state_dict(), 'model.ckpt')
+"""

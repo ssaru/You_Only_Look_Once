@@ -1,7 +1,7 @@
 import torch
 import torchvision.transforms as transforms
 
-from pytorch.dataset import VOC
+from pytorch_version.dataloader import VOC
 
 batch_size = 1
 root ="/media/martin/Martin/DataSet/VOC/VOCdevkit/VOC2008/"
