@@ -1,4 +1,6 @@
-import os
+import sys, os
+
+sys.path.insert(0, os.path.dirname(__file__))
 
 import torch
 import torch.utils.data as data
@@ -6,6 +8,15 @@ from PIL import Image
 
 from convertYolo.Format import YOLO as cvtYOLO
 from convertYolo.Format import VOC as cvtVOC
+"""
+try:
+    from convertYolo.Format import YOLO as cvtYOLO
+    from convertYolo.Format import VOC as cvtVOC
+except Exception: # ImportError
+    import convertYolo.Format as Format
+    cvtYOLO = Format.YOLO
+    cvtVOC = Format.VOC
+"""
 
 class VOC(data.Dataset):
     """ `VOC PASCAL Object Detection Challenge <http://host.robots.ox.ac.uk/pascal/VOC/voc2012/>_ Dataset `
@@ -29,11 +40,12 @@ class VOC(data.Dataset):
     LABEL_FOLDER = "Annotations"
     IMG_EXTENSIONS = '.jpg'
 
-    def __init__(self, root, train=True, transform=None, target_transform=None):
+    def __init__(self, root, train=True, transform=None, target_transform=None, resize=448):
         self.root = os.path.expanduser(root)
         self.transform = transform
         self.target_transform = target_transform
         self.train = train
+        self.resize_factor = resize
 
         with open("./voc.names") as f:
             self.classes = f.read().splitlines()
@@ -41,7 +53,7 @@ class VOC(data.Dataset):
         if not self._check_exists():
             raise RuntimeError("Dataset not found.")
 
-        self.data =self.cvtData()
+        self.data = self.cvtData()
 
     def _check_exists(self):
         return os.path.exists(os.path.join(self.root, self.IMAGE_FOLDER)) and \
@@ -64,7 +76,15 @@ class VOC(data.Dataset):
 
                 for key in keys:
                     contents = list(filter(None, data[key].split("\n")))
-                    result.append({os.path.join(self.root, self.IMAGE_FOLDER, "".join([key, self.IMG_EXTENSIONS])) : contents})
+                    target = []
+                    for i in range(len(contents)):
+                        tmp = contents[i]
+                        tmp = tmp.split(" ")
+                        for j in range(len(tmp)):
+                            tmp[j] = float(tmp[j])
+                        target.append(tmp)
+
+                    result.append({os.path.join(self.root, self.IMAGE_FOLDER, "".join([key, self.IMG_EXTENSIONS])) : target})
 
                 return result
 
@@ -90,9 +110,11 @@ class VOC(data.Dataset):
                 ]
             ]
         """
+        #print("INDEX : {}".format(index))
         key = list(self.data[index].keys())[0]
-        print(key)
+        #print("KEY : {}".format(key))
         img = Image.open(key).convert('RGB')
+        img = img.resize((self.resize_factor, self.resize_factor))
         target = self.data[index][key]
 
         if self.transform is not None:

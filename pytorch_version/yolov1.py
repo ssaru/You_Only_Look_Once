@@ -3,7 +3,8 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 
-from pytorch_version.torchsummary.torchsummary import summary
+from torchsummary.torchsummary import summary
+from dataloader import VOC
 
 # Device configuration
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -11,30 +12,29 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # Hyper parameters
 num_epochs = 100
 num_classes = 20
-batch_size = 128
+batch_size = 1
 learning_rate = 0.001
 
-"""
-# MNIST dataset
-train_dataset = torchvision.datasets.CIFAR10(root='./data/',
-                                           train=True,
-                                           transform=transforms.ToTensor(),
-                                           download=True)
+def detection_collate(batch):
+    r"""Puts each data field into a tensor with outer dimension batch size"""
+    targets = []
+    imgs = []
 
-test_dataset = torchvision.datasets.CIFAR10(root='./data/',
-                                          train=False,
-                                          transform=transforms.ToTensor())
+    for sample in batch:
+        imgs.append(sample[0])
+        targets.append(torch.FloatTensor(sample[1]))
 
-# Data loader
+    return torch.stack(imgs,0), targets
+
+# VOC Pascal Dataset
+train_dataset = VOC(root = "/media/keti-1080ti/ketiCar/DataSet/VOC/VOCdevkit/VOC2012/",
+                    transform=transforms.ToTensor())
+
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                           batch_size=batch_size,
-                                           shuffle=True)
+                                           batch_size = batch_size,
+                                           shuffle = True,
+                                           collate_fn=detection_collate)
 
-test_loader = torch.utils.data.DataLoader(dataset=test_dataset,
-                                          batch_size=batch_size,
-                                          shuffle=False)
-
-"""
 # Convolutional neural network (two convolutional layers)
 class YOLOv1(nn.Module):
     def __init__(self):
@@ -171,25 +171,34 @@ class YOLOv1(nn.Module):
         return out
 
 
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = YOLOv1().to(device)
 
 summary(model, (3, 448,448))
 
-"""
-# Loss and optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+MSE_criterion = nn.MSELoss()
+CLASS_criterion = nn.CrossEntropyLoss()
+
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', verbose=True)
 
 # Train the model
 total_step = len(train_loader)
 for epoch in range(num_epochs):
     for i, (images, labels) in enumerate(train_loader):
+
         images = images.to(device)
-        labels = labels.to(device)
+        #labels = labels.to(device)
 
         # Forward pass
         outputs = model(images)
+
+        print(outputs.shape)
+        break
+
+        """
         loss = criterion(outputs, labels)
 
         # Backward and optimize
@@ -200,7 +209,11 @@ for epoch in range(num_epochs):
         if (i + 1) % 100 == 0:
             print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                   .format(epoch + 1, num_epochs, i + 1, total_step, loss.item()))
+                  
+        
+        """
 
+"""
 # Test the model
 model.eval()  # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
 with torch.no_grad():
