@@ -6,6 +6,8 @@ import torchvision.transforms as transforms
 from torchsummary.torchsummary import summary
 from dataloader import VOC
 
+import numpy as np
+
 # Device configuration
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -15,6 +17,36 @@ num_classes = 20
 batch_size = 1
 learning_rate = 0.001
 
+def calc_loss(prediction, y_hat):
+    lambda_obj = 5
+    lambda_noobj = 0.5
+
+    MSE_criterion = nn.MSELoss()
+    CLASS_criterion = nn.CrossEntropyLoss()
+
+    coordinate_loss1 = torch.pow( torch.sub(get_axis_array(y_hat, 2), get_axis_array(prediction, 1)), 2) + \
+                       torch.pow( torch.sub(get_axis_array(y_hat, 3), get_axis_array(prediction, 2)), 2)
+    coordinate_loss2 = torch.pow( torch.sub(get_axis_array(y_hat, 2), get_axis_array(prediction, 5)), 2) + \
+                       torch.pow( torch.sub(get_axis_array(y_hat, 3), get_axis_array(prediction, 6)), 2)
+
+
+
+    pass
+
+
+
+def get_axis_array(x, axis):
+
+    width, height, channels = x.shape
+
+    out = np.zeros((width, height))
+
+    for i in range(width):
+        for j in range(height):
+            out[i][j] = x[i][j][axis]
+
+    return torch.from_numpy(out)
+
 def detection_collate(batch):
     r"""Puts each data field into a tensor with outer dimension batch size"""
     targets = []
@@ -22,12 +54,34 @@ def detection_collate(batch):
 
     for sample in batch:
         imgs.append(sample[0])
-        targets.append(torch.FloatTensor(sample[1]))
 
-    return torch.stack(imgs,0), targets
+        np_label = np.zeros((7,7,6), dtype=np.float32)
+        for object in sample[1]:
+            objectness=1
+            cls = object[0]
+            x_ratio = object[1]
+            y_ratio = object[2]
+            w_ratio = object[3]
+            h_ratio = object[4]
+
+            # can be acuqire grid (x,y) index when divide (1/S) of x_ratio
+            grid_x_index = int(x_ratio // (1/7))
+            grid_y_index = int(y_ratio // (1/7))
+            x_offset = x_ratio - ((grid_x_index) * (1/7))
+            y_offset = y_ratio - ((grid_y_index) * (1/7))
+
+            # insert object row in specific label tensor index as (x,y)
+            # object row follow as
+            # [objectness, class, x offset, y offset, width ratio, height ratio]
+            np_label[grid_x_index-1][grid_y_index-1] = np.array([objectness, cls, x_offset, y_offset, w_ratio, h_ratio])
+
+        label = torch.from_numpy(np_label)
+        targets.append(label)
+
+    return torch.stack(imgs,0), torch.stack(targets, 0)
 
 # VOC Pascal Dataset
-train_dataset = VOC(root = "/media/keti-1080ti/ketiCar/DataSet/VOC/VOCdevkit/VOC2012/",
+train_dataset = VOC(root = "/media/martin/keti_martin/Martin/DataSet/VOC_Pascal/VOCdevkit/VOC2008/",
                     transform=transforms.ToTensor())
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
@@ -177,10 +231,6 @@ model = YOLOv1().to(device)
 
 summary(model, (3, 448,448))
 
-
-MSE_criterion = nn.MSELoss()
-CLASS_criterion = nn.CrossEntropyLoss()
-
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', verbose=True)
 
@@ -190,13 +240,15 @@ for epoch in range(num_epochs):
     for i, (images, labels) in enumerate(train_loader):
 
         images = images.to(device)
-        #labels = labels.to(device)
+        labels = labels.to(device)
 
         # Forward pass
         outputs = model(images)
 
         print(outputs.shape)
-        break
+        print(images.shape)
+        print(labels.shape)
+        exit()
 
         """
         loss = criterion(outputs, labels)
