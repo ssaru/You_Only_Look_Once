@@ -24,28 +24,91 @@ def calc_loss(prediction, y_hat):
     MSE_criterion = nn.MSELoss()
     CLASS_criterion = nn.CrossEntropyLoss()
 
-    coordinate_loss1 = torch.pow( torch.sub(get_axis_array(y_hat, 2), get_axis_array(prediction, 1)), 2) + \
-                       torch.pow( torch.sub(get_axis_array(y_hat, 3), get_axis_array(prediction, 2)), 2)
-    coordinate_loss2 = torch.pow( torch.sub(get_axis_array(y_hat, 2), get_axis_array(prediction, 5)), 2) + \
-                       torch.pow( torch.sub(get_axis_array(y_hat, 3), get_axis_array(prediction, 6)), 2)
+    COORDINATE_LOSS1 = []
+    COORDINATE_LOSS2 = []
+
+    SIZE_LOSS1 = []
+    SIZE_LOSS2 = []
+
+    OBJNESS_CLS_LOSS = []
+    NOOBJNESS_CLS_LOSS = []
+    OBJNESS_LOSS1 = []
+    OBJNESS_LOSS2 = []
+
+
+    for batch in range(len(y_hat)):
+        for i in range(len(y_hat[0])):
+            for j in range(len(y_hat[0][0])):
+                #print(get_axis_array(y_hat[batch], i, j))
+
+                label_ = get_axis_array(y_hat[batch], i, j)
+                pred_ = get_axis_array(prediction[batch], i, j)
+
+                print("label_ : {}".format(label_))
+                print("pred_ : {}".format(pred_))
+
+                if label_[0] == 1:
+                    objness = 1
+                    noobjness = 0
+                else:
+                    objness = 0
+                    noobjness = 1
+
+                # label elements
+                # [objectness, class, x offset, y offset, width ratio, height ratio]
+
+                # objness case
+                point_loss_1 = objness * (torch.pow(pred_[1] - label_[2], 2) + torch.pow(pred_[2] - label_[3], 2))
+                size_loss_1 = objness * (torch.pow(torch.sqrt(pred_[3]) - torch.sqrt(label_[4]), 2) + torch.pow(
+                    torch.sqrt(pred_[4]) - torch.sqrt(label_[5]),2))
+
+                point_loss_2 = objness * (torch.pow(pred_[6] - label_[2], 2) + torch.pow(pred_[7] - label_[3], 2))
+                size_loss_2 = objness * (torch.pow(torch.sqrt(pred_[8]) - torch.sqrt(label_[4]), 2) + torch.pow(
+                    torch.sqrt(pred_[9]) - torch.sqrt(label_[5]), 2))
+
+                cls_pred = pred_[10:]
+                cls_label = label_[1]
+                objness_cls_loss = objness * CLASS_criterion(cls_pred.view(-1), cls_label.view(-1))
+
+                # noobjness case
+                noobjness_cls_loss = noobjness * CLASS_criterion(cls_pred.view(-1), cls_label.view(-1))
+
+                # objness loss case
+                objness_loss_1 = objness * torch.pow(pred_[0] - label_[0], 2)
+                objness_loss_2 = objness * torch.pow(pred_[5] - label_[0], 2)
+
+                # appendix
+                COORDINATE_LOSS1.append(point_loss_1)
+                COORDINATE_LOSS2.append(point_loss_2)
+
+                SIZE_LOSS1.append(size_loss_1)
+                SIZE_LOSS2.append(size_loss_2)
+
+                OBJNESS_CLS_LOSS.append(objness_cls_loss)
+                NOOBJNESS_CLS_LOSS.append(noobjness_cls_loss)
+
+                OBJNESS_LOSS1.append(objness_loss_1)
+                OBJNESS_LOSS2.append(objness_loss_2)
+
+
+    total_loss = (lambda_obj * torch.sum(torch.from_numpy(np.asarray(COORDINATE_LOSS1)))) + \
+                 (lambda_obj * torch.sum(torch.from_numpy(np.asarray(SIZE_LOSS1)))) + \
+                 (lambda_obj * torch.sum(torch.from_numpy(np.asarray(COORDINATE_LOSS2)))) + \
+                 (lambda_obj * torch.sum(torch.from_numpy(np.asarray(SIZE_LOSS2)))) + \
+                 (torch.from_numpy(np.asarray(OBJNESS_CLS_LOSS))) + \
+                 (lambda_noobj * torch.from_numpy(np.asarray(NOOBJNESS_CLS_LOSS))) + \
+                 (torch.from_numpy(np.asarray(OBJNESS_LOSS1))) + \
+                 (torch.from_numpy(np.asarray(OBJNESS_LOSS2)))
+
+    return total_loss
 
 
 
-    pass
+def get_axis_array(x, i, j):
 
+    out = x[i][j][:]
 
-
-def get_axis_array(x, axis):
-
-    width, height, channels = x.shape
-
-    out = np.zeros((width, height))
-
-    for i in range(width):
-        for j in range(height):
-            out[i][j] = x[i][j][axis]
-
-    return torch.from_numpy(out)
+    return out
 
 def detection_collate(batch):
     r"""Puts each data field into a tensor with outer dimension batch size"""
@@ -220,7 +283,7 @@ class YOLOv1(nn.Module):
         out = out.reshape(out.size(0), -1)
         out = self.fc1(out)
         out = self.fc2(out)
-        out = out.reshape((-1,7,7,30), 1)
+        out = out.reshape((-1,7,7,30))
 
         return out
 
@@ -245,13 +308,13 @@ for epoch in range(num_epochs):
         # Forward pass
         outputs = model(images)
 
+        print(outputs)
         print(outputs.shape)
-        print(images.shape)
+        print(labels)
         print(labels.shape)
-        exit()
+        print("label length : {}, {}, {}, {}".format(len(labels) ,len(labels[0]), len(labels[0][0]), len(labels[0][0][0])))
 
-        """
-        loss = criterion(outputs, labels)
+        loss = calc_loss(outputs, labels)
 
         # Backward and optimize
         optimizer.zero_grad()
@@ -262,9 +325,6 @@ for epoch in range(num_epochs):
             print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                   .format(epoch + 1, num_epochs, i + 1, total_step, loss.item()))
                   
-        
-        """
-
 """
 # Test the model
 model.eval()  # eval mode (batchnorm uses moving mean/variance instead of mini-batch mean/variance)
