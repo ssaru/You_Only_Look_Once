@@ -35,6 +35,15 @@ def calc_loss(prediction, y_hat):
     OBJNESS_LOSS1 = []
     OBJNESS_LOSS2 = []
 
+    objness_check = np.array([0], dtype=np.float32)
+    cpu_label = y_hat.cpu().data.numpy()
+
+    objness_true = torch.cuda.FloatTensor([1])
+    objness_false = torch.cuda.FloatTensor([0])
+
+    noobjness_true = torch.cuda.FloatTensor([1])
+    noobjness_false = torch.cuda.FloatTensor([0])
+
 
     for batch in range(len(y_hat)):
         for i in range(len(y_hat[0])):
@@ -42,17 +51,30 @@ def calc_loss(prediction, y_hat):
                 #print(get_axis_array(y_hat[batch], i, j))
 
                 label_ = get_axis_array(y_hat[batch], i, j)
+                clabel = get_axis_array(cpu_label[batch], i, j)
                 pred_ = get_axis_array(prediction[batch], i, j)
 
+                """
                 print("label_ : {}".format(label_))
                 print("pred_ : {}".format(pred_))
+                
 
-                if label_[0] == 1:
-                    objness = 1
-                    noobjness = 0
+                print("HERE")
+                print(label_)
+                print(label_.dtype)
+                print(label_.data[0])
+                """
+
+                check = clabel[0]
+
+                if check == objness_check:
+                    objness = objness_true
+                    noobjness = noobjness_false
+                    objness_flag = True
                 else:
-                    objness = 0
-                    noobjness = 1
+                    objness = objness_false
+                    noobjness = noobjness_true
+                    objness_flag = False
 
                 # label elements
                 # [objectness, class, x offset, y offset, width ratio, height ratio]
@@ -66,12 +88,35 @@ def calc_loss(prediction, y_hat):
                 size_loss_2 = objness * (torch.pow(torch.sqrt(pred_[8]) - torch.sqrt(label_[4]), 2) + torch.pow(
                     torch.sqrt(pred_[9]) - torch.sqrt(label_[5]), 2))
 
+                #cls_pred = pred_[10:].view([1, 20])
                 cls_pred = pred_[10:]
-                cls_label = label_[1]
-                objness_cls_loss = objness * CLASS_criterion(cls_pred.view(-1), cls_label.view(-1))
+
+
+                if objness_flag:
+                    background_cls = torch.cuda.FloatTensor([0])
+                    cls_pred = torch.cat([cls_pred, background_cls], dim=0)
+                    cls_label = label_[1].long()
+
+                else:
+                    background_cls = torch.cuda.FloatTensor([1])
+                    cls_pred = torch.cat([cls_pred, background_cls], dim=0)
+                    cls_label = torch.cuda.LongTensor([21])
+
+                cls_pred = cls_pred.view([1, 21])
+                cls_label = cls_label.view([1])
+
+                """
+                print("prediction : {}".format(cls_pred))
+                print("Shape of Prediction : {}".format(cls_pred.shape))
+                print("label : {}".format(cls_label))
+                print("Shape of label : {}".format(cls_label.shape))
+                """
+
+                objness_cls_loss = objness * CLASS_criterion(cls_pred, cls_label)
 
                 # noobjness case
-                noobjness_cls_loss = noobjness * CLASS_criterion(cls_pred.view(-1), cls_label.view(-1))
+                noobjness_cls_loss = noobjness * CLASS_criterion(cls_pred, cls_label)
+
 
                 # objness loss case
                 objness_loss_1 = objness * torch.pow(pred_[0] - label_[0], 2)
@@ -89,6 +134,8 @@ def calc_loss(prediction, y_hat):
 
                 OBJNESS_LOSS1.append(objness_loss_1)
                 OBJNESS_LOSS2.append(objness_loss_2)
+
+        exit()
 
 
     total_loss = (lambda_obj * torch.sum(torch.from_numpy(np.asarray(COORDINATE_LOSS1)))) + \
@@ -144,7 +191,7 @@ def detection_collate(batch):
     return torch.stack(imgs,0), torch.stack(targets, 0)
 
 # VOC Pascal Dataset
-train_dataset = VOC(root = "/media/martin/keti_martin/Martin/DataSet/VOC_Pascal/VOCdevkit/VOC2008/",
+train_dataset = VOC(root = "/media/keti-1080ti/ketiCar/DataSet/VOC/VOCdevkit/VOC2012/",
                     transform=transforms.ToTensor())
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
@@ -308,11 +355,13 @@ for epoch in range(num_epochs):
         # Forward pass
         outputs = model(images)
 
+        """
         print(outputs)
         print(outputs.shape)
         print(labels)
         print(labels.shape)
         print("label length : {}, {}, {}, {}".format(len(labels) ,len(labels[0]), len(labels[0][0]), len(labels[0][0][0])))
+        """
 
         loss = calc_loss(outputs, labels)
 
