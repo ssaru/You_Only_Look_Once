@@ -75,7 +75,7 @@ def detection_collate(batch):
     return torch.stack(imgs,0), torch.stack(targets, 0)
 
 # VOC Pascal Dataset
-train_dataset = VOC(root = "/media/keti-1080ti/ketiCar/DataSet/VOC/VOCdevkit/VOC2012/",
+train_dataset = VOC(root = "/media/keti-ai/AI_HARD3/DataSets/VOC_Pascal/VOC/VOCdevkit/VOC2012",
                     transform=transforms.ToTensor())
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
@@ -291,7 +291,7 @@ def detection_loss(output, target):
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 net = YOLOv1()
-model = torch.nn.DataParallel(net, device_ids=[0,1]).cuda()
+model = torch.nn.DataParallel(net, device_ids=[0,1,2,3]).cuda()
 
 #model = net.to(device)
 #net.train()
@@ -329,14 +329,13 @@ for epoch in range(num_epochs):
                           [param_group['lr'] for param_group in optimizer.param_groups]))
             pass
 
-    if (epoch % 1) == 0:
-        print("Hello")
+    if (epoch % 200) == 0:
         save_checkpoint({
             'epoch': epoch + 1,
             'arch': "YOLOv1",
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
-        }, False)
+        }, False, filename='checkpoint_{}.pth.tar'.format(epoch))
 
                   
 """
