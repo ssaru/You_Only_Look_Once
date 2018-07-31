@@ -13,10 +13,12 @@ import numpy as np
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Hyper parameters
-num_epochs = 1000
+num_epochs = 16000
 num_classes = 21
-batch_size = 32
-learning_rate = 1e-5
+batch_size = 64
+learning_rate = 1e-4
+
+dropout_prop = 0.5
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
@@ -178,12 +180,12 @@ class YOLOv1(nn.Module):
         self.fc1 = nn.Sequential(
             nn.Linear(7*7*1024, 4096),
             nn.LeakyReLU(),
-            nn.Dropout()
+            nn.Dropout(dropout_prop)
         )
 
         self.fc2 = nn.Sequential(
             nn.Linear(4096, 7*7*((5+5)+num_classes)),
-            nn.Dropout(),
+            nn.Dropout(dropout_prop),
         )
 
 
@@ -283,7 +285,7 @@ def detection_loss(output, target):
     objness2_loss = torch.sum(torch.pow(objness2_output - objness_label, 2))
 
     total_loss = (obj_coord1_loss + obj_size1_loss + obj_coord2_loss + obj_size2_loss + noobj_class_loss +
-                  obj_class_loss + objness1_loss + objness2_loss)
+                  obj_class_loss + objness1_loss + objness2_loss) / b
 
     return total_loss
 
@@ -320,16 +322,16 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
-        if(epoch == 300):
+        if(epoch == 1000) or (epoch == 5000):
             scheduler.step()
 
         if (i + 1) % 100 == 0:
             print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, learning rate: {}'
                   .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
                           [param_group['lr'] for param_group in optimizer.param_groups]))
-            pass
+            
 
-    if (epoch % 200) == 0:
+    if (epoch != 0) and (epoch % 10000) == 0:
         save_checkpoint({
             'epoch': epoch + 1,
             'arch': "YOLOv1",
