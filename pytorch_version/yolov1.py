@@ -328,8 +328,8 @@ for epoch in range(num_epochs):
                   .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
                           [param_group['lr'] for param_group in optimizer.param_groups]))
 
-        if(epoch == 100) or (epoch == 500) or (epoch == 1000) or (epoch == 2000) or (epoch == 4000) or (epoch == 8000) or (epoch == 14000):
-            scheduler.step()
+    if(epoch == 100) or (epoch == 500) or (epoch == 1000) or (epoch == 2000) or (epoch == 4000) or (epoch == 8000) or (epoch == 14000):
+        scheduler.step()
             
 
     if (epoch % 300) == 0:
