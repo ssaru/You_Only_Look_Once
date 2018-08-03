@@ -306,6 +306,7 @@ scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
 # Train the model
 total_step = len(train_loader)
 for epoch in range(num_epochs):
+
     for i, (images, labels) in enumerate(train_loader):
 
         images = images.to(device)
@@ -322,16 +323,16 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
-        if(epoch == 1000) or (epoch == 5000):
-            scheduler.step()
-
         if (i + 1) % 100 == 0:
             print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, learning rate: {}'
                   .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
                           [param_group['lr'] for param_group in optimizer.param_groups]))
+
+        if(epoch == 100) or (epoch == 500) or (epoch == 1000) or (epoch == 2000) or (epoch == 4000) or (epoch == 8000) or (epoch == 14000):
+            scheduler.step()
             
 
-    if (epoch != 0) and (epoch % 10000) == 0:
+    if (epoch % 300) == 0:
         save_checkpoint({
             'epoch': epoch + 1,
             'arch': "YOLOv1",
