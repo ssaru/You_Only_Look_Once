@@ -36,7 +36,7 @@ def main():
         result, data = coco.parse(label_path)
     elif datasets == "VOC":
         voc = VOC()
-        result, data = voc.parse(label_path)
+        result, data = voc.parse(label_path, cls_option=True, selective_cls="person")
     elif datasets == "UDACITY":
         udacity = UDACITY()
         result, data = udacity.parse(label_path, img_path)
@@ -47,6 +47,7 @@ def main():
         yolo =YOLO(os.path.abspath(cls_list))
         result, data = yolo.parse(label_path, img_path, img_type=img_type)
 
+    cnt = 0
     if result is True:
         for key in data:
 
@@ -71,10 +72,16 @@ def main():
 
             del draw
             print("===============================================================================================\n\n")
+            plt.figure(figsize=(20,10))
             plt.imshow(im)
+
+            plt.savefig("".join([str(cnt), ".png"]))
+            cnt += 1
+
             plt.show()
             plt.clf()
             im.close()
+            plt.close()
 
     else:
         print("return value : {}, msg : {}, args: {}".format(result, data, args))
