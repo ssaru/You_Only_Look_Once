@@ -347,7 +347,7 @@ def visualize_weights_distribution(net):
 
 # VOC Pascal Dataset
 train_dataset = VOC(root = "/media/keti-ai/AI_HARD3/DataSets/VOC_Pascal/VOC/VOCdevkit/VOC2012",
-                    transform=transforms.ToTensor())
+                    transform=transforms.ToTensor(), cls_option = True, selective_cls="person")
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                            batch_size = batch_size,
