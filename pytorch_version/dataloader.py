@@ -67,8 +67,8 @@ class VOC(data.Dataset):
         voc = cvtVOC()
         yolo = cvtYOLO(os.path.abspath(self.CLASSES))
         flag, data =voc.parse(os.path.join(self.root, self.LABEL_FOLDER), cls_option=self.cls_option, selective_cls=self.selective_cls)
-        print(data)
-        exit()
+        #print(data)
+        #exit()
 
         try:
 
