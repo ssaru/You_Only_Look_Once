@@ -40,12 +40,14 @@ class VOC(data.Dataset):
     LABEL_FOLDER = "Annotations"
     IMG_EXTENSIONS = '.jpg'
 
-    def __init__(self, root, train=True, transform=None, target_transform=None, resize=448):
+    def __init__(self, root, train=True, transform=None, target_transform=None, resize=448, cls_option=False, selective_cls=None):
         self.root = os.path.expanduser(root)
         self.transform = transform
         self.target_transform = target_transform
         self.train = train
         self.resize_factor = resize
+        self.cls_option = cls_option
+        self.selective_cls = selective_cls
 
         with open("./voc.names") as f:
             self.classes = f.read().splitlines()
@@ -64,7 +66,9 @@ class VOC(data.Dataset):
         result = []
         voc = cvtVOC()
         yolo = cvtYOLO(os.path.abspath(self.CLASSES))
-        flag, data =voc.parse(os.path.join(self.root, self.LABEL_FOLDER))
+        flag, data =voc.parse(os.path.join(self.root, self.LABEL_FOLDER), cls_option=self.cls_option, selective_cls=self.selective_cls)
+        #print(data)
+        #exit()
 
         try:
 

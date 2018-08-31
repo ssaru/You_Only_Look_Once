@@ -8,9 +8,7 @@ from torchsummary.torchsummary import summary
 from dataloader import VOC
 
 import numpy as np
-
-# Device configuration
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+import matplotlib.pyplot as plt
 
 # Hyper parameters
 num_epochs = 16000
@@ -75,15 +73,6 @@ def detection_collate(batch):
         targets.append(label)
 
     return torch.stack(imgs,0), torch.stack(targets, 0)
-
-# VOC Pascal Dataset
-train_dataset = VOC(root = "/media/keti-ai/AI_HARD3/DataSets/VOC_Pascal/VOC/VOCdevkit/VOC2012",
-                    transform=transforms.ToTensor())
-
-train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                           batch_size = batch_size,
-                                           shuffle = True,
-                                           collate_fn=detection_collate)
 
 # Convolutional neural network (two convolutional layers)
 class YOLOv1(nn.Module):
@@ -189,6 +178,15 @@ class YOLOv1(nn.Module):
         )
 
 
+        for m in self.modules():
+
+            if isinstance(m, nn.Conv2d):
+                #nn.init.xavier_normal_(m.weight)
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity="leaky_relu")
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
     def forward(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
@@ -289,56 +287,62 @@ def detection_loss(output, target):
 
     return total_loss
 
+def visualize_weights_distribution(net):
+
+    attr = net.__dict__["_modules"]
+    keys = attr.keys()
+
+    np_parmas = {}
+
+    for key in keys:
+        key_attr = eval("".join(["net", ".", key, ".", "state_dict()"]))
+        for ind in key_attr:
+            if "weight" in ind:
+                np_parmas["".join([key, "_weights"])] = key_attr[ind].data.numpy()
+            if "bias" in ind:
+                np_parmas["".join([key, "_bias"])] = key_attr[ind].data.numpy()
+
+    np_params_keys = np_parmas.keys()
+
+    for key in np_params_keys:
+
+        # Visualize Convolutional Layer
+        if "layer" in key and "bias" not in key:
+
+            c_out, c_in, w, h = np_parmas[key].shape
+
+            plt.figure(figsize=(20, 20))
+
+            cnt = 1
+            # range(c_out)
+            for _out in range(10):
+                # range(c_in)
+                for _in in range(c_in if 10 > c_in else 10):
+                    plt.subplot(10, 10, cnt)
+                    cnt += 1
+                    n, bins, patches = plt.hist(np_parmas[key][_out, _in, :, :])
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-net = YOLOv1()
-model = torch.nn.DataParallel(net, device_ids=[0,1,2,3]).cuda()
+            print("Save Fig in {}".format(key))
+            plt.savefig("".join([key, ".png"]))
+            plt.close()
+            cnt = 0
 
-#model = net.to(device)
-#net.train()
+        # Visualize  Fully Connected Layer
+        """
+        if "fc" in key:
+            c_in, c_out = np_parmas[key].shape
+            plt.figure(figsize=(20, 20))
 
-summary(model, (3, 448,448))
+            cnt = 1
+            plt.subplot(1,1,1)
+            n, bins, patches = plt.hist(np_parmas[key], bins=10)
+            plt.savefig("".join([key, ".png"]))
+        """
 
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-5)
-scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
 
-# Train the model
-total_step = len(train_loader)
-for epoch in range(num_epochs):
 
-    for i, (images, labels) in enumerate(train_loader):
 
-        images = images.to(device)
-        labels = labels.to(device)
-
-        # Forward pass
-        outputs = model(images)
-
-        # Calc Loss
-        loss = detection_loss(outputs, labels)
-
-        # Backward and optimize
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        if (i + 1) % 100 == 0:
-            print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, learning rate: {}'
-                  .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
-                          [param_group['lr'] for param_group in optimizer.param_groups]))
-
-    if(epoch == 100) or (epoch == 500) or (epoch == 1000) or (epoch == 2000) or (epoch == 4000) or (epoch == 8000) or (epoch == 14000):
-        scheduler.step()
-            
-
-    if (epoch % 300) == 0:
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'arch': "YOLOv1",
-            'state_dict': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-        }, False, filename='checkpoint_{}.pth.tar'.format(epoch))
 
                   
 """

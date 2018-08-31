@@ -216,7 +216,7 @@ class VOC:
             return False, msg
 
     @staticmethod
-    def parse(path):
+    def parse(path, cls_option=False, selective_cls=None):
         try:
 
             (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(path)))
@@ -263,16 +263,28 @@ class VOC:
                         "ymax": float(xml_bndbox.find("ymax").text)
                     }
                     tmp["bndbox"] = bndbox
-                    obj[str(obj_index)] = tmp
 
-                    obj_index += 1
+                    if (cls_option==True) and (selective_cls != None):
+                        if _object.find("name").text != selective_cls:
+                            continue
+                        else:
+                            obj[str(obj_index)] = tmp
+                            obj_index += 1
+                    else:
+                        obj[str(obj_index)] = tmp
+                        obj_index += 1
 
                 annotation = {
                     "size": size,
                     "objects": obj
                 }
 
-                data[root.find("filename").text.split(".")[0]] = annotation
+                if obj_index != 0:
+
+                    if cls_option==True:
+                        annotation["objects"]["num_obj"] = obj_index
+
+                    data[root.find("filename").text.split(".")[0]] = annotation
 
                 printProgressBar(progress_cnt + 1, progress_length, prefix='VOC Parsing:'.ljust(15), suffix='Complete', length=40)
                 progress_cnt += 1
