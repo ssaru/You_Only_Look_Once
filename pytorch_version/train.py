@@ -14,7 +14,7 @@ import yolov1
 
 num_epochs = 16000
 num_classes = 21
-batch_size = 64
+batch_size = 8
 learning_rate = 1e-4
 
 dropout_prop = 0.5
@@ -23,18 +23,19 @@ dropout_prop = 0.5
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # VOC Pascal Dataset
+TT = "/media/martin/keti_martin/Martin/DataSet/VOC_Pascal/VOC/VOCdevkit/VOC2012"
 DATASET_PATH_MARTIN = "/media/keti-ai/AI_HARD3/DataSets/VOC_Pascal/VOC/VOCdevkit/VOC2012"
 DATASET_PATH_JAEWON = "D:\dataset\VOC2012"
-train_dataset = VOC(root = DATASET_PATH_JAEWON,
-                    transform=transforms.ToTensor(), cls_option = True, selective_cls="person")
+train_dataset = VOC(root = TT,
+                    transform=transforms.ToTensor(), cls_option = False, selective_cls=None)
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                            batch_size = batch_size,
                                            shuffle = True,
-                                           collate_fn=detection_collate)
+                                           collate_fn=yolov1.detection_collate)
 
 
-net = YOLOv1()
+net = yolov1.YOLOv1()
 # visualize_weights_distribution(net)
 
 model = torch.nn.DataParallel(net, device_ids=[0]).cuda()
@@ -57,7 +58,7 @@ for epoch in range(num_epochs):
         outputs = model(images)
 
         # Calc Loss
-        loss = detection_loss(outputs, labels)
+        loss = yolov1.detection_loss(outputs, labels)
 
         # Backward and optimize
         optimizer.zero_grad()

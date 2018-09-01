@@ -81,94 +81,118 @@ class YOLOv1(nn.Module):
         # LAYER 1
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
+            nn.BatchNorm2d(64), #, momentum=0.01
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
         # LAYER 2
         self.layer2 = nn.Sequential(
             nn.Conv2d(64, 192, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(192, momentum=0.01),
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
         # LAYER 3
         self.layer3 = nn.Sequential(
             nn.Conv2d(192, 128, kernel_size=1, stride=1, padding=0),
+            #nn.BatchNorm2d(128, momentum=0.01),
             nn.LeakyReLU())
         self.layer4 = nn.Sequential(
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer5 = nn.Sequential(
             nn.Conv2d(256, 256, kernel_size=1, stride=1, padding=1),
+            #nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer6 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=0),
+            #nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
         # LAYER 4
         self.layer7 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
+            #nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer8 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer9 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
+            #nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer10 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer11 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
+            #nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer12 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer13 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
+            #nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer14 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer15 = nn.Sequential(
             nn.Conv2d(512, 512, kernel_size=1, stride=1, padding=0),
+            #nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer16 = nn.Sequential(
             nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
         # LAYER 5
         self.layer17 = nn.Sequential(
             nn.Conv2d(1024, 512, kernel_size=1, stride=1, padding=0),
+            #nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer18 = nn.Sequential(
             nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
         self.layer19 = nn.Sequential(
             nn.Conv2d(1024, 512, kernel_size=1, stride=1, padding=0),
+            #nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer20 = nn.Sequential(
             nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
         self.layer21 = nn.Sequential(
             nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
         self.layer22 = nn.Sequential(
             nn.Conv2d(1024, 1024, kernel_size=3, stride=2, padding=1),
+            #nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
 
         # LAYER 6
         self.layer23 = nn.Sequential(
             nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
         self.layer24 = nn.Sequential(
             nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
+            #nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
 
         self.fc1 = nn.Sequential(
             nn.Linear(7*7*1024, 4096),
-            nn.LeakyReLU(),
+            #nn.LeakyReLU(),
             nn.Dropout(dropout_prop)
         )
 
