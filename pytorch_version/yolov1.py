@@ -10,13 +10,38 @@ from dataloader import VOC
 import numpy as np
 import matplotlib.pyplot as plt
 
+import visdom
+
 # Hyper parameters
 num_epochs = 16000
 num_classes = 2
 batch_size = 64
-learning_rate = 1e-4
+learning_rate = 5e-5
 
 dropout_prop = 0.5
+
+# visdom function
+
+def create_vis_plot(viz, _xlabel, _ylabel, _title, _legend):
+    return viz.line(
+        X=torch.zeros((1,)).cpu(),
+        Y=torch.zeros((1, 1)).cpu(),
+        opts=dict(
+            xlabel=_xlabel,
+            ylabel=_ylabel,
+            title=_title,
+            legend=_legend
+        )
+    )
+
+def update_vis_plot(viz, iteration, loss, window1, window2, update_type,
+                    epoch_size=1):
+    viz.line(
+        X=torch.ones((1, 1)).cpu() * iteration,
+        Y=torch.Tensor([loss]).unsqueeze(0).cpu() / epoch_size,
+        win=window1,
+        update=update_type
+    )
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
@@ -246,6 +271,7 @@ class YOLOv1(nn.Module):
 
 def detection_loss(output, target):
     # hyper parameter
+
     lambda_coord = 5
     lambda_noobj = 0.5
 
@@ -305,16 +331,20 @@ def detection_loss(output, target):
                                (torch.pow(width_ratio2_output - width_ratio_label, 2) +
                                 torch.pow(height_ratio2_output - height_ratio_label, 2)))
 
+
+
     obj_class_loss = torch.sum(objness_label * MSE_criterion(class_output, y_one_hot))
+
+
     noobj_class_loss = lambda_noobj * torch.sum(noobjness_label * MSE_criterion(class_output, y_one_hot))
 
-    objness1_loss = torch.sum(torch.pow(objness1_output - objness_label, 2))
-    objness2_loss = torch.sum(torch.pow(objness2_output - objness_label, 2))
+    objness1_loss = torch.sum(objness_label * torch.pow(objness1_output - objness_label, 2))
+    objness2_loss = torch.sum(objness_label * torch.pow(objness2_output - objness_label, 2))
 
     total_loss = (obj_coord1_loss + obj_size1_loss + obj_coord2_loss + obj_size2_loss + noobj_class_loss +
                   obj_class_loss + objness1_loss + objness2_loss) / b
 
-    return total_loss
+    return total_loss, obj_coord1_loss, obj_size1_loss, obj_coord2_loss, obj_size2_loss, obj_class_loss, noobj_class_loss, objness1_loss, objness2_loss
 
 def visualize_weights_distribution(net):
 
