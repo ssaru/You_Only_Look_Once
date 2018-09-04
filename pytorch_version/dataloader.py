@@ -35,7 +35,8 @@ class VOC(data.Dataset):
 
     """
 
-    CLASSES = "./voc.names"
+    #CLASSES = "./voc.names"
+    CLASSES = "./person.names"
     IMAGE_FOLDER = "JPEGImages"
     LABEL_FOLDER = "Annotations"
     IMG_EXTENSIONS = '.jpg'
@@ -67,7 +68,7 @@ class VOC(data.Dataset):
         voc = cvtVOC()
         yolo = cvtYOLO(os.path.abspath(self.CLASSES))
         flag, data =voc.parse(os.path.join(self.root, self.LABEL_FOLDER), cls_option=self.cls_option, selective_cls=self.selective_cls)
-        #print(data)
+        #print(flag, data)
         #exit()
 
         try:

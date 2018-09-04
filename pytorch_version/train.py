@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 import yolov1
 
 num_epochs = 16000
-num_classes = 21
-batch_size = 8
+num_classes = 2
+batch_size = 32
 learning_rate = 1e-4
 
 dropout_prop = 0.5
@@ -23,7 +23,7 @@ dropout_prop = 0.5
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # VOC Pascal Dataset
-TT = "/media/martin/keti_martin/Martin/DataSet/VOC_Pascal/VOC/VOCdevkit/VOC2012"
+TT = "/home/keti-1080ti/Documents/dev/Yolov1/dataset/"
 DATASET_PATH_MARTIN = "/media/keti-ai/AI_HARD3/DataSets/VOC_Pascal/VOC/VOCdevkit/VOC2012"
 DATASET_PATH_JAEWON = "D:\dataset\VOC2012"
 train_dataset = VOC(root = TT,
@@ -38,7 +38,7 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
 net = yolov1.YOLOv1()
 # visualize_weights_distribution(net)
 
-model = torch.nn.DataParallel(net, device_ids=[0]).cuda()
+model = torch.nn.DataParallel(net, device_ids=[0, 1]).cuda()
 
 summary(model, (3, 448,448))
 
@@ -65,17 +65,19 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
-        if (i + 1) % 100 == 0:
+
+        if (i + 1) % 10 == 0:
             print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, learning rate: {}'
                   .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
                           [param_group['lr'] for param_group in optimizer.param_groups]))
+
 
     if(epoch == 100) or (epoch == 500) or (epoch == 1000) or (epoch == 2000) or (epoch == 4000) or (epoch == 8000) or (epoch == 14000):
         scheduler.step()
             
 
     if (epoch % 300) == 0:
-        save_checkpoint({
+        yolov1.save_checkpoint({
             'epoch': epoch + 1,
             'arch': "YOLOv1",
             'state_dict': model.state_dict(),
