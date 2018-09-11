@@ -14,7 +14,7 @@ import visdom
 
 # Hyper parameters
 num_epochs = 16000
-num_classes = 2
+num_classes = 1
 batch_size = 64
 learning_rate = 5e-5
 
@@ -63,19 +63,21 @@ def one_hot(output , label):
 
     return torch.from_numpy(dst)
 
-def detection_collate(batch):
+num_classes = 1
+def detection_collate_for_small_yolo(batch):
     r"""Puts each data field into a tensor with outer dimension batch size"""
     targets = []
     imgs = []
-
+    sizes = []
     for sample in batch:
         imgs.append(sample[0])
-
+        #sizes.append(sample[2])
+        
         np_label = np.zeros((7,7,6), dtype=np.float32)
         for i in range(7):
             for j in range(7):
                 np_label[i][j][1] = (num_classes-1)
-
+        print(len(sample[1]))
         for object in sample[1]:
             objectness=1
             cls = object[0]
@@ -83,7 +85,8 @@ def detection_collate(batch):
             y_ratio = object[2]
             w_ratio = object[3]
             h_ratio = object[4]
-
+            shape_np = object[5]
+            
             # can be acuqire grid (x,y) index when divide (1/S) of x_ratio
             grid_x_index = int(x_ratio // (1/7))
             grid_y_index = int(y_ratio // (1/7))
@@ -97,8 +100,13 @@ def detection_collate(batch):
 
         label = torch.from_numpy(np_label)
         targets.append(label)
-
-    return torch.stack(imgs,0), torch.stack(targets, 0)
+        print(type(np_label))
+        print(type(shape_np))
+        print(type(label))
+        shape = torch.Tensor(shape_np)
+        sizes.append(shape)
+        
+    return torch.stack(imgs,0), torch.stack(targets, 0), torch.stack(sizes, 0)
 
 # Convolutional neural network (two convolutional layers)
 class YOLOv1(nn.Module):
@@ -318,8 +326,8 @@ def detection_loss(output, target):
 
     obj_size1_loss = lambda_coord * \
                      torch.sum(objness_label *
-                               (torch.pow(width_ratio1_output - width_ratio_label, 2) +
-                                torch.pow(height_ratio1_output - height_ratio_label, 2)))
+                               (torch.pow(width_ratio1_output - torch.sqrt(width_ratio_label), 2) +
+                                torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
 
     obj_coord2_loss = lambda_coord * \
                       torch.sum(objness_label *
@@ -328,8 +336,8 @@ def detection_loss(output, target):
 
     obj_size2_loss = lambda_coord * \
                      torch.sum(objness_label *
-                               (torch.pow(width_ratio2_output - width_ratio_label, 2) +
-                                torch.pow(height_ratio2_output - height_ratio_label, 2)))
+                               (torch.pow(torch.sqrt(width_ratio2_output) - torch.sqrt(width_ratio_label), 2) +
+                                torch.pow(torch.sqrt(height_ratio2_output) - torch.sqrt(height_ratio_label), 2)))
 
 
 
