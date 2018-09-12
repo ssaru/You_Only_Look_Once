@@ -3,6 +3,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
 import torch
+import torchvision
 import torch.utils.data as data
 from PIL import Image
 
@@ -121,13 +122,14 @@ class VOC(data.Dataset):
         img = Image.open(key).convert('RGB')
         img = img.resize((self.resize_factor, self.resize_factor))
         target = self.data[index][key]
-
+                
         if self.transform is not None:
-            img = self.transform(img)
+            img, target = self.transform([img, target])
+            img = torchvision.transforms.ToTensor()(img)
             pass
 
         if self.target_transform is not None:
             # Future works
             pass
-
+                
         return img, target
