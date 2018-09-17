@@ -216,6 +216,11 @@ def detection_loss_4_small_yolo(output, target):
     objness_label = target[:, :, :, 4]
     class_label = target[:, :, :, 5]
     
+    #Apply sigmoid 
+    sigmoid = nn.Sigmoid()
+    objness1_output = sigmoid(objness1_output)
+    class_output = sigmoid(class_output)
+    
     noobjness_label = torch.neg(torch.add(objness_label, -1))
 
     obj_coord1_loss = lambda_coord * \
