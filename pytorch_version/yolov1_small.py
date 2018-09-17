@@ -234,10 +234,8 @@ def detection_loss_4_small_yolo(output, target):
                                 torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
 
     obj_class_loss = torch.sum(objness_label * torch.pow(class_output - class_label, 2))
-    
     noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness1_output - objness_label, 2))
-    
-    objness1_loss = torch.sum(objness_label * torch.pow(objness1_output - objness_label, 2))
+      objness1_loss =                torch.sum(  objness_label * torch.pow(objness1_output - objness_label, 2))
 
     total_loss = (obj_coord1_loss + obj_size1_loss + noobjness1_loss  + objness1_loss + obj_class_loss) / b
 
