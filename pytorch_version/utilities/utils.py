@@ -57,7 +57,7 @@ def detection_collate_with_size(batch):
             # insert object row in specific label tensor index as (x,y)
             # object row follow as
             # [objectness, class, x offset, y offset, width ratio, height ratio]
-            np_label[grid_x_index-1][grid_y_index-1] = np.array([objectness, cls, x_offset, y_offset, w_ratio, h_ratio])
+            np_label[grid_x_index-1][grid_y_index-1] = np.array([x_offset, y_offset, w_ratio, h_ratio, objectness, cls])
             
         label = torch.from_numpy(np_label)
         targets.append(label)
