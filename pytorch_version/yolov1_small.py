@@ -201,19 +201,19 @@ def detection_loss_4_small_yolo(output, target):
     MSE_criterion = nn.MSELoss()
 
     # output tensor slice
-    objness1_output = output[:, :, :, 0]
-    x_offset1_output = output[:, :, :, 1]
-    y_offset1_output = output[:, :, :, 2]
-    width_ratio1_output = output[:, :, :, 3]
-    height_ratio1_output = output[:, :, :, 4]
+    x_offset1_output = output[:, :, :, 0]
+    y_offset1_output = output[:, :, :, 1]
+    width_ratio1_output = output[:, :, :, 2]
+    height_ratio1_output = output[:, :, :, 3]
+    objness1_output = output[:, :, :, 4]
     class_output = output[:, :, :, 5]
 
     # label tensor slice
-    objness_label = target[:, :, :, 0]
-    x_offset_label = target[:, :, :, 1]
-    y_offset_label = target[:, :, :, 2]
-    width_ratio_label = target[:, :, :, 3]
-    height_ratio_label = target[:, :, :, 4]
+    x_offset_label = target[:, :, :, 0]
+    y_offset_label = target[:, :, :, 1]
+    width_ratio_label = target[:, :, :, 2]
+    height_ratio_label = target[:, :, :, 3]
+    objness_label = target[:, :, :, 4]
     class_label = target[:, :, :, 5]
     
     noobjness_label = torch.neg(torch.add(objness_label, -1))
