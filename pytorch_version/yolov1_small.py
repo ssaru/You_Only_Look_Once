@@ -210,11 +210,11 @@ def detection_loss_4_small_yolo(output, target):
 
     # label tensor slice
     objness_label = target[:, :, :, 0]
-    class_label = target[:, :, :, 1]
-    x_offset_label = target[:, :, :, 2]
-    y_offset_label = target[:, :, :, 3]
-    width_ratio_label = target[:, :, :, 4]
-    height_ratio_label = target[:, :, :, 5]
+    x_offset_label = target[:, :, :, 1]
+    y_offset_label = target[:, :, :, 2]
+    width_ratio_label = target[:, :, :, 3]
+    height_ratio_label = target[:, :, :, 4]
+    class_label = target[:, :, :, 5]
     
     noobjness_label = torch.neg(torch.add(objness_label, -1))
 
