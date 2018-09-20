@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import imgaug as ia
 
+import matplotlib.pyplot as plt
+
 num_classes = 1
 
 def one_hot(output , label):
@@ -157,5 +159,37 @@ def GetYoloStyleBBoxes(bbs_aug, image_width, image_height):
         
     return normed_bbs_aug
 
+def visualize_GT(images, labels):
+    Ibatch, Ic, Iw, Ih = images.shape
+    Lbatch, Lc, Lw, Lh = labels.shape
+
+    print("=======================================================")
+    print(images)
+
+    print("=======================================================")
+
+    images = torch.mul(images, 255)
+    print(images)
+    print("=======================================================")
 
 
+
+    assert (Ibatch == Lbatch)
+
+    for i in range(Ibatch):
+        image = images.type(torch.ByteTensor)
+        print("=======================================================")
+        print(type(image))
+        print(image.shape)
+        img = image[i, :, :, :].cpu().data.numpy()
+        label = labels[i, :, :].cpu().data.numpy()
+
+        print(img)
+        print("=======================================================")
+
+        plt.imshow(img)
+        plt.show()
+        plt.close()
+
+
+    pass

@@ -6,6 +6,9 @@ import torch
 import torchvision
 import torch.utils.data as data
 from PIL import Image
+import matplotlib.pyplot as plt
+
+import numpy as np
 
 from convertYolo.Format import YOLO as cvtYOLO
 from convertYolo.Format import VOC as cvtVOC
@@ -37,13 +40,14 @@ class VOC(data.Dataset):
     """
 
     #CLASSES = "./voc.names"
-    CLASSES = "./person.names"
+    #CLASSES = "./person.names"
+    CLASSES = "./5class.names"
     IMAGE_FOLDER = "JPEGImages"
     LABEL_FOLDER = "Annotations"
     IMG_EXTENSIONS = '.jpg'
 
     def __init__(self, root, train=True, transform=None, target_transform=None, resize=448, cls_option=False, selective_cls=None):
-        self.root = os.path.expanduser(root)
+        self.root = root
         self.transform = transform
         self.target_transform = target_transform
         self.train = train
@@ -51,7 +55,7 @@ class VOC(data.Dataset):
         self.cls_option = cls_option
         self.selective_cls = selective_cls
 
-        with open("./voc.names") as f:
+        with open("./5class.names") as f:
             self.classes = f.read().splitlines()
 
         if not self._check_exists():
@@ -60,6 +64,10 @@ class VOC(data.Dataset):
         self.data = self.cvtData()
 
     def _check_exists(self):
+
+        print("Image Folder : {}".format(os.path.join(self.root, self.IMAGE_FOLDER)))
+        print("Label Folder : {}".format(os.path.join(self.root, self.LABEL_FOLDER)))
+
         return os.path.exists(os.path.join(self.root, self.IMAGE_FOLDER)) and \
                os.path.exists(os.path.join(self.root, self.LABEL_FOLDER))
 
@@ -116,26 +124,37 @@ class VOC(data.Dataset):
                 ]
             ]
         """
-        #print("INDEX : {}".format(index))
+
+
         key = list(self.data[index].keys())[0]
-        #print("KEY : {}".format(key))
+
         img = Image.open(key).convert('RGB')
         
         current_shape = img.size
-        #print('current_shape:',current_shape)
         
         img = img.resize((self.resize_factor, self.resize_factor))
+        img = np.array(img.getdata(), dtype=np.float).reshape(img.size[0], img.size[1], 3)
+
         target = self.data[index][key]
 
         if self.transform is not None:
-            img, target = self.transform([img, target])
-            img = torchvision.transforms.ToTensor()(img)
+            #img, target = self.transform([img, target])
+            #img = torchvision.transforms.ToTensor()(img)
+            img = self.transform(img)
 
-            pass
+        else:
+            img = torch.FloatTensor(img)
+            print(img)
+            img = torch.div(img, 255)
+            print(img)
+            print(img.shape)
+
+
+
 
         if self.target_transform is not None:
             # Future works
             pass
         
         
-        return img, target, current_shape
+        return img, target

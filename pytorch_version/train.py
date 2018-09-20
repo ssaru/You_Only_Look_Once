@@ -5,12 +5,18 @@ import torchvision
 import torchvision.transforms as transforms
 
 from torchsummary.torchsummary import summary
-from dataloader import VOC
+from utilities.dataloader import VOC
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 import visdom
+from utilities.utils import save_checkpoint
+from utilities.utils import create_vis_plot
+from utilities.utils import update_vis_plot
+from utilities.utils import visualize_GT
+
+from utilities.dataloader_test import detection_collate
 import yolov1
 
 viz = visdom.Visdom()
@@ -18,24 +24,24 @@ viz = visdom.Visdom()
 vis_title = 'Yolo V1 Deepbaksu_vision (feat. martin, visionNoob) PyTorch on ' + 'VOC'
 vis_legend = ['Train Loss']
 
-iter_plot = yolov1.create_vis_plot(viz, 'Iteration', 'Total Loss', vis_title, vis_legend)
+iter_plot = create_vis_plot(viz, 'Iteration', 'Total Loss', vis_title, vis_legend)
 
-coord1_plot = yolov1.create_vis_plot(viz, 'Iteration', 'coord1', vis_title, vis_legend)
-size1_plot = yolov1.create_vis_plot(viz, 'Iteration', 'size1', vis_title, vis_legend)
+coord1_plot = create_vis_plot(viz, 'Iteration', 'coord1', vis_title, vis_legend)
+size1_plot = create_vis_plot(viz, 'Iteration', 'size1', vis_title, vis_legend)
 
-coord2_plot = yolov1.create_vis_plot(viz, 'Iteration', 'coord2', vis_title, vis_legend)
-size2_plot = yolov1.create_vis_plot(viz, 'Iteration', 'size2', vis_title, vis_legend)
+coord2_plot = create_vis_plot(viz, 'Iteration', 'coord2', vis_title, vis_legend)
+size2_plot = create_vis_plot(viz, 'Iteration', 'size2', vis_title, vis_legend)
 
-obj_cls_plot = yolov1.create_vis_plot(viz, 'Iteration', 'obj_cls', vis_title, vis_legend)
-noobj_cls_plot = yolov1.create_vis_plot(viz, 'Iteration', 'noobj_cls', vis_title, vis_legend)
+obj_cls_plot = create_vis_plot(viz, 'Iteration', 'obj_cls', vis_title, vis_legend)
+noobj_cls_plot = create_vis_plot(viz, 'Iteration', 'noobj_cls', vis_title, vis_legend)
 
-objectness1_plot = yolov1.create_vis_plot(viz, 'Iteration', 'objectness1', vis_title, vis_legend)
-objectness2_plot = yolov1.create_vis_plot(viz, 'Iteration', 'objectness2', vis_title, vis_legend)
+objectness1_plot = create_vis_plot(viz, 'Iteration', 'objectness1', vis_title, vis_legend)
+objectness2_plot = create_vis_plot(viz, 'Iteration', 'objectness2', vis_title, vis_legend)
 
 
 num_epochs = 40000
-num_classes = 2
-batch_size = 32
+num_classes = 5
+batch_size = 1
 learning_rate = 1e-4
 
 dropout_prop = 0.5
@@ -45,23 +51,25 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # VOC Pascal Dataset
 TT = "/home/keti-1080ti/Documents/dev/Yolov1/dataset/"
-DATASET_PATH_MARTIN = "/media/keti-ai/AI_HARD3/DataSets/VOC_Pascal/VOC/VOCdevkit/VOC2012"
+DATASET_PATH_MARTIN_LAP = "/home/martin/Desktop/5class/_class_balance/"
+DATASET_PATH_MARTIN_COM = "/media/keti-ai/AI_HARD3/DataSets/VOC_Pascal/VOC/VOCdevkit/VOC2012"
 DATASET_PATH_JAEWON = "D:\dataset\VOC2012"
-train_dataset = VOC(root = TT,
-                    transform=transforms.ToTensor(), cls_option = False, selective_cls=None)
+# transforms.ToTensor()
+train_dataset = VOC(root = DATASET_PATH_MARTIN_LAP,
+                    transform=None, cls_option = False, selective_cls=None)
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                            batch_size = batch_size,
                                            shuffle = True,
-                                           collate_fn=yolov1.detection_collate)
+                                           collate_fn=detection_collate)
 
 
 net = yolov1.YOLOv1()
 # visualize_weights_distribution(net)
 
-model = torch.nn.DataParallel(net, device_ids=[0, 1]).cuda()
+model = torch.nn.DataParallel(net, device_ids=[0]).cuda()
 
-summary(model, (3, 448,448))
+#summary(model, (3, 448,448))
 
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-5)
 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.95)
@@ -78,6 +86,16 @@ with open("train_log.txt", "w") as f:
 
         for i, (images, labels) in enumerate(train_loader):
 
+            #print("image type : {}".format(images))
+            #print("label type : {}".format(labels))
+            #print()
+            #print()
+
+            visualize_GT(images, labels)
+
+
+
+            exit()
 
             images = images.to(device)
             labels = labels.to(device)
