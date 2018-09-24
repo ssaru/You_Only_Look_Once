@@ -28,15 +28,22 @@ def detection_collate(batch):
             h_ratio = object[4]
 
             # can be acuqire grid (x,y) index when divide (1/S) of x_ratio
-            grid_x_index = int(x_ratio // (1/7))
-            grid_y_index = int(y_ratio // (1/7))
-            x_offset = x_ratio - ((grid_x_index) * (1/7))
-            y_offset = y_ratio - ((grid_y_index) * (1/7))
+            scale_factor = (1/7)
+            grid_x_index = int(x_ratio // scale_factor)
+            grid_y_index = int(y_ratio // scale_factor)
+            x_offset = (x_ratio / scale_factor) - grid_x_index
+            y_offset = (y_ratio / scale_factor) - grid_y_index
+
+            #print("x ratio : {}, y ratio : {}".format(x_ratio, y_ratio))
+            #print("x index : {}, y index : {}".format(grid_x_index, grid_y_index))
+            #print("x shift : {}, y shift : {}".format(x_offset, y_offset))
+            #print("x raw : {}, y raw : {}".format(x_ratio/scale_factor, y_ratio/scale_factor))
+
 
             # insert object row in specific label tensor index as (x,y)
             # object row follow as
             # [objectness, class, x offset, y offset, width ratio, height ratio]
-            np_label[grid_x_index-1][grid_y_index-1] = np.array([objectness, cls, x_offset, y_offset, w_ratio, h_ratio])
+            np_label[grid_x_index][grid_y_index] = np.array([objectness, cls, x_offset, y_offset, w_ratio, h_ratio])
 
         label = torch.from_numpy(np_label)
         targets.append(label)

@@ -61,7 +61,7 @@ def detection_collate_with_size(batch):
             # object row follow as
             # [objectness, class, x offset, y offset, width ratio, height ratio]
             np_label[grid_x_index-1][grid_y_index-1] = np.array([objectness, cls, x_offset, y_offset, w_ratio, h_ratio])
-            
+
         label = torch.from_numpy(np_label)
         targets.append(label)
 
@@ -166,40 +166,13 @@ def visualize_GT(images, labels, cls_list):
 
     assert (Ibatch == Lbatch)
 
-    print(labels)
-
-    exit()
-    # For Debug
-    """
-    print(cls_list)
-    print("=======================================================")
-    print(images)
-
-    print("=======================================================")
-
-    print(images)
-    print("=======================================================")
-    """
     images = torch.mul(images, 255)
 
     for i in range(Ibatch):
         image = images.type(torch.ByteTensor)
 
-
-        # for Debug
-        """
-        print("=======================================================")
-        print(type(image))
-        print(image.shape)
-        """
         img = image[i, :, :, :].cpu().data.numpy()
         label = labels[i, :, :].cpu().data.numpy()
-
-        # for Debug
-        """
-        print(img)
-        print("=======================================================")
-        """
 
         # Draw 7x7 Grid in Image
         dx = Iw // 7
@@ -210,8 +183,8 @@ def visualize_GT(images, labels, cls_list):
         img[:,:: dy] = color
         img[::dx,:] = color
 
-        print(label.shape)
-        print(label[:,:,0])
+        #print(label.shape)
+        #print(label[:,:,0])
 
         obj_coord = label[:,:,0]
         cls = label[:,:,1]
@@ -222,8 +195,6 @@ def visualize_GT(images, labels, cls_list):
 
         _img= Image.fromarray(img, 'RGB')
         draw = ImageDraw.Draw(_img)
-
-
 
         for i in range(7):
             for j in range(7):
@@ -251,6 +222,3 @@ def visualize_GT(images, labels, cls_list):
         plt.imshow(_img)
         plt.show()
         plt.close()
-
-
-    pass

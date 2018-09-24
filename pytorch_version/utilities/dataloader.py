@@ -137,30 +137,39 @@ class VOC(data.Dataset):
 
         target = self.data[index][key]
 
-        # for debug
-        print(img.shape)
-        #plt.imshow(img.astype(np.uint8))
-        #plt.show()
-        #exit()
+        # for debug & visualization
+        """
         _image = img.astype(dtype=np.uint8)
         _image = Image.fromarray(_image, "RGB")
         draw = ImageDraw.Draw(_image)
-        _dict = self.dict_data[key.split("/")[-1].split(".")[0]]
-        num_obj = int(_dict["objects"]["num_obj"])
-        print(_dict)
-        for i in range(num_obj):
-            xmin = int(_dict["objects"][str(i)]["bndbox"]["xmin"])
-            ymin = int(_dict["objects"][str(i)]["bndbox"]["ymin"])
-            xmax = int(_dict["objects"][str(i)]["bndbox"]["xmax"])
-            ymax = int(_dict["objects"][str(i)]["bndbox"]["ymax"])
-            cls = _dict["objects"][str(i)]["name"]
+
+
+        for obj in target:
+
+            cls = obj[0]
+            x_center = obj[1]
+            y_center = obj[2]
+            w_ratio = obj[3]
+            h_ratio = obj[4]
+
+            width = int(w_ratio * self.resize_factor)
+            height = int(h_ratio * self.resize_factor)
+
+            xmin = int(x_center * self.resize_factor - width/2)
+            ymin = int(y_center * self.resize_factor - height/2)
+            xmax = xmin + width
+            ymax = ymin + height
+
+            cls = self.classes[int(cls)]
+
             draw.rectangle(((xmin, ymin), (xmax, ymax)), outline="blue")
             draw.text((xmin, ymin), cls)
 
+
         plt.imshow(_image)
         plt.show()
+        """
 
-        #draw.rectangle(((xmin, ymin), (xmax, ymax)), outline="blue")
 
         if self.transform is not None:
             #img, target = self.transform([img, target])
@@ -182,13 +191,7 @@ class VOC(data.Dataset):
 
         else:
             img = torch.FloatTensor(img)
-            #print(img)
             img = torch.div(img, 255)
-            #print(img)
-            #print(img.shape)
-
-
-
 
         if self.target_transform is not None:
             # Future works

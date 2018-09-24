@@ -52,10 +52,10 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # VOC Pascal Dataset
 TT = "/home/keti-1080ti/Documents/dev/Yolov1/dataset/"
 DATASET_PATH_MARTIN_LAP = "/home/martin/Desktop/5class/_class_balance/"
-DATASET_PATH_MARTIN_COM = "/media/keti-ai/AI_HARD3/DataSets/VOC_Pascal/VOC/VOCdevkit/VOC2012"
+DATASET_PATH_MARTIN_COM = "/home/martin/Desktop/_class_balance/"
 DATASET_PATH_JAEWON = "D:\dataset\VOC2012"
 # transforms.ToTensor()
-train_dataset = VOC(root = DATASET_PATH_MARTIN_LAP,
+train_dataset = VOC(root = DATASET_PATH_MARTIN_COM,
                     transform=None, cls_option = False, selective_cls=None)
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
@@ -86,9 +86,8 @@ with open("train_log.txt", "w") as f:
 
         for i, (images, labels) in enumerate(train_loader):
 
-            visualize_GT(images, labels, train_dataset.classes)
-
-            exit()
+            # GT Check
+            #visualize_GT(images, labels, train_dataset.classes)
 
             images = images.to(device)
             labels = labels.to(device)
