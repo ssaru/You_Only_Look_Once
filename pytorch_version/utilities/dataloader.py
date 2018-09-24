@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import torch
 import torchvision
 import torch.utils.data as data
-from PIL import Image
+from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -76,14 +76,14 @@ class VOC(data.Dataset):
         result = []
         voc = cvtVOC()
         yolo = cvtYOLO(os.path.abspath(self.CLASSES))
-        flag, data =voc.parse(os.path.join(self.root, self.LABEL_FOLDER), cls_option=self.cls_option, selective_cls=self.selective_cls)
+        flag, self.dict_data =voc.parse(os.path.join(self.root, self.LABEL_FOLDER), cls_option=self.cls_option, selective_cls=self.selective_cls)
         #print(flag, data)
         #exit()
 
         try:
 
             if flag:
-                flag, data =yolo.generate(data)
+                flag, data =yolo.generate(self.dict_data)
 
                 keys = list(data.keys())
                 keys = sorted(keys, key=lambda key: int(key.split("_")[-1]))
@@ -137,17 +137,55 @@ class VOC(data.Dataset):
 
         target = self.data[index][key]
 
+        # for debug
+        print(img.shape)
+        #plt.imshow(img.astype(np.uint8))
+        #plt.show()
+        #exit()
+        _image = img.astype(dtype=np.uint8)
+        _image = Image.fromarray(_image, "RGB")
+        draw = ImageDraw.Draw(_image)
+        _dict = self.dict_data[key.split("/")[-1].split(".")[0]]
+        num_obj = int(_dict["objects"]["num_obj"])
+        print(_dict)
+        for i in range(num_obj):
+            xmin = int(_dict["objects"][str(i)]["bndbox"]["xmin"])
+            ymin = int(_dict["objects"][str(i)]["bndbox"]["ymin"])
+            xmax = int(_dict["objects"][str(i)]["bndbox"]["xmax"])
+            ymax = int(_dict["objects"][str(i)]["bndbox"]["ymax"])
+            cls = _dict["objects"][str(i)]["name"]
+            draw.rectangle(((xmin, ymin), (xmax, ymax)), outline="blue")
+            draw.text((xmin, ymin), cls)
+
+        plt.imshow(_image)
+        plt.show()
+
+        #draw.rectangle(((xmin, ymin), (xmax, ymax)), outline="blue")
+
         if self.transform is not None:
             #img, target = self.transform([img, target])
             #img = torchvision.transforms.ToTensor()(img)
+            img = img.astype(dtype=np.uint8)
+            print(img.shape)
+            print(img.dtype)
+            plt.imshow(img)
+            plt.show()
+            img = img.astype(dtype=np.float64)
             img = self.transform(img)
+            print(img.shape)
+            image = img.type(torch.ByteTensor).view(448,448,3)
+            image = image.cpu().numpy()
+            plt.imshow(image)
+            plt.show()
+            exit()
+
 
         else:
             img = torch.FloatTensor(img)
-            print(img)
+            #print(img)
             img = torch.div(img, 255)
-            print(img)
-            print(img.shape)
+            #print(img)
+            #print(img.shape)
 
 
 

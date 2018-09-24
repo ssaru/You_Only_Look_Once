@@ -3,6 +3,7 @@ import torch
 import imgaug as ia
 
 import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
 
 num_classes = 1
 
@@ -159,35 +160,95 @@ def GetYoloStyleBBoxes(bbs_aug, image_width, image_height):
         
     return normed_bbs_aug
 
-def visualize_GT(images, labels):
-    Ibatch, Ic, Iw, Ih = images.shape
-    Lbatch, Lc, Lw, Lh = labels.shape
-
-    print("=======================================================")
-    print(images)
-
-    print("=======================================================")
-
-    images = torch.mul(images, 255)
-    print(images)
-    print("=======================================================")
-
-
+def visualize_GT(images, labels, cls_list):
+    Ibatch, Iw, Ih, Ic = images.shape
+    Lbatch, Lw, Lh, Lc = labels.shape
 
     assert (Ibatch == Lbatch)
 
+    print(labels)
+
+    exit()
+    # For Debug
+    """
+    print(cls_list)
+    print("=======================================================")
+    print(images)
+
+    print("=======================================================")
+
+    print(images)
+    print("=======================================================")
+    """
+    images = torch.mul(images, 255)
+
     for i in range(Ibatch):
         image = images.type(torch.ByteTensor)
+
+
+        # for Debug
+        """
         print("=======================================================")
         print(type(image))
         print(image.shape)
+        """
         img = image[i, :, :, :].cpu().data.numpy()
         label = labels[i, :, :].cpu().data.numpy()
 
+        # for Debug
+        """
         print(img)
         print("=======================================================")
+        """
 
-        plt.imshow(img)
+        # Draw 7x7 Grid in Image
+        dx = Iw // 7
+        dy = Ih // 7
+
+        color = np.array([255, 0, 0])
+
+        img[:,:: dy] = color
+        img[::dx,:] = color
+
+        print(label.shape)
+        print(label[:,:,0])
+
+        obj_coord = label[:,:,0]
+        cls = label[:,:,1]
+        x_shift = label[:,:,2]
+        y_shift = label[:, :, 3]
+        w_ratio = label[:, :, 4]
+        h_ratio = label[:, :, 5]
+
+        _img= Image.fromarray(img, 'RGB')
+        draw = ImageDraw.Draw(_img)
+
+
+
+        for i in range(7):
+            for j in range(7):
+                if obj_coord[i][j] == 1:
+
+                    x_center = dx*i + int(dx*x_shift[i][j])
+                    y_center = dy*j + int(dy*y_shift[i][j])
+                    width = int(w_ratio[i][j] * Iw)
+                    height = int(h_ratio[i][j] * Ih)
+
+                    xmin = x_center - (width//2)
+                    ymin = y_center - (height//2)
+                    xmax = xmin + width
+                    ymax = ymin + height
+
+                    draw.rectangle(((xmin, ymin),(xmax, ymax)), outline="blue")
+
+                    draw.rectangle(((dx * i, dy * j), (dx * i + dx, dy * j + dy)), outline='#00ff88')
+                    draw.ellipse(((x_center - 2, y_center - 2),
+                                  (x_center + 2, y_center + 2)),
+                                 fill='blue')
+                    draw.text((dx * i, dy * j), cls_list[int(cls[i][j])])
+
+        plt.figure()
+        plt.imshow(_img)
         plt.show()
         plt.close()
 

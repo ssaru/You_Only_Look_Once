@@ -86,14 +86,7 @@ with open("train_log.txt", "w") as f:
 
         for i, (images, labels) in enumerate(train_loader):
 
-            #print("image type : {}".format(images))
-            #print("label type : {}".format(labels))
-            #print()
-            #print()
-
-            visualize_GT(images, labels)
-
-
+            visualize_GT(images, labels, train_dataset.classes)
 
             exit()
 
