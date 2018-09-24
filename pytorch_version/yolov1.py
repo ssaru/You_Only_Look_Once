@@ -10,17 +10,69 @@ from dataloader import VOC
 import numpy as np
 import matplotlib.pyplot as plt
 
-import visdom
-
 # Hyper parameters
 num_epochs = 16000
-num_classes = 1
+num_classes = 21
 batch_size = 64
-learning_rate = 5e-5
+learning_rate = 1e-4
 
 dropout_prop = 0.5
 
-num_classes = 1
+
+def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
+    torch.save(state, filename)
+    if is_best:
+        shutil.copyfile(filename, 'model_best.pth.tar')
+
+def one_hot(output , label):
+
+    label = label.cpu().data.numpy()
+    b, s1, s2, c = output.shape
+    dst = np.zeros([b,s1,s2,c], dtype=np.float32)
+
+    for k in range(b):
+        for i in range(s1):
+            for j in range(s2):
+                dst[k][i][j][int(label[k][i][j])] = 1.
+
+    return torch.from_numpy(dst)
+
+def detection_collate(batch):
+    r"""Puts each data field into a tensor with outer dimension batch size"""
+    targets = []
+    imgs = []
+
+    for sample in batch:
+        imgs.append(sample[0])
+
+        np_label = np.zeros((7,7,6), dtype=np.float32)
+        for i in range(7):
+            for j in range(7):
+                np_label[i][j][1] = 20
+
+        for object in sample[1]:
+            objectness=1
+            cls = object[0]
+            x_ratio = object[1]
+            y_ratio = object[2]
+            w_ratio = object[3]
+            h_ratio = object[4]
+
+            # can be acuqire grid (x,y) index when divide (1/S) of x_ratio
+            grid_x_index = int(x_ratio // (1/7))
+            grid_y_index = int(y_ratio // (1/7))
+            x_offset = x_ratio - ((grid_x_index) * (1/7))
+            y_offset = y_ratio - ((grid_y_index) * (1/7))
+
+            # insert object row in specific label tensor index as (x,y)
+            # object row follow as
+            # [objectness, class, x offset, y offset, width ratio, height ratio]
+            np_label[grid_x_index-1][grid_y_index-1] = np.array([objectness, cls, x_offset, y_offset, w_ratio, h_ratio])
+
+        label = torch.from_numpy(np_label)
+        targets.append(label)
+
+    return torch.stack(imgs,0), torch.stack(targets, 0)
 
 # Convolutional neural network (two convolutional layers)
 class YOLOv1(nn.Module):
@@ -29,113 +81,89 @@ class YOLOv1(nn.Module):
         # LAYER 1
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
-            nn.BatchNorm2d(64), #, momentum=0.01
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
         # LAYER 2
         self.layer2 = nn.Sequential(
             nn.Conv2d(64, 192, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(192, momentum=0.01),
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
         # LAYER 3
         self.layer3 = nn.Sequential(
             nn.Conv2d(192, 128, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(128, momentum=0.01),
             nn.LeakyReLU())
         self.layer4 = nn.Sequential(
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer5 = nn.Sequential(
             nn.Conv2d(256, 256, kernel_size=1, stride=1, padding=1),
-            nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer6 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=0),
-            nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
         # LAYER 4
         self.layer7 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer8 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer9 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer10 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer11 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer12 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer13 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(256, momentum=0.01),
             nn.LeakyReLU())
         self.layer14 = nn.Sequential(
             nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer15 = nn.Sequential(
             nn.Conv2d(512, 512, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer16 = nn.Sequential(
             nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
         # LAYER 5
         self.layer17 = nn.Sequential(
             nn.Conv2d(1024, 512, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer18 = nn.Sequential(
             nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
         self.layer19 = nn.Sequential(
             nn.Conv2d(1024, 512, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(512, momentum=0.01),
             nn.LeakyReLU())
         self.layer20 = nn.Sequential(
             nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
         self.layer21 = nn.Sequential(
             nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
         self.layer22 = nn.Sequential(
             nn.Conv2d(1024, 1024, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
 
         # LAYER 6
         self.layer23 = nn.Sequential(
             nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
         self.layer24 = nn.Sequential(
             nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(1024, momentum=0.01),
             nn.LeakyReLU())
 
         self.fc1 = nn.Sequential(
@@ -187,13 +215,12 @@ class YOLOv1(nn.Module):
         out = out.reshape(out.size(0), -1)
         out = self.fc1(out)
         out = self.fc2(out)
-        out = out.reshape((-1,7,7,((5+5)+num_classes)))
+        out = out.reshape((-1,7,7,31))
 
         return out
 
 def detection_loss(output, target):
     # hyper parameter
-
     lambda_coord = 5
     lambda_noobj = 0.5
 
@@ -224,10 +251,6 @@ def detection_loss(output, target):
 
     y_one_hot = one_hot(class_output, class_label).cuda()
 
-    #print(y_one_hot)
-    #print(y_one_hot.shape)
-    #exit()
-
     x_offset_label = target[:, :, :, 2]
     y_offset_label = target[:, :, :, 3]
     width_ratio_label = target[:, :, :, 4]
@@ -240,8 +263,8 @@ def detection_loss(output, target):
 
     obj_size1_loss = lambda_coord * \
                      torch.sum(objness_label *
-                               (torch.pow(width_ratio1_output - torch.sqrt(width_ratio_label), 2) +
-                                torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
+                               (torch.pow(width_ratio1_output - width_ratio_label, 2) +
+                                torch.pow(height_ratio1_output - height_ratio_label, 2)))
 
     obj_coord2_loss = lambda_coord * \
                       torch.sum(objness_label *
@@ -250,23 +273,19 @@ def detection_loss(output, target):
 
     obj_size2_loss = lambda_coord * \
                      torch.sum(objness_label *
-                               (torch.pow(torch.sqrt(width_ratio2_output) - torch.sqrt(width_ratio_label), 2) +
-                                torch.pow(torch.sqrt(height_ratio2_output) - torch.sqrt(height_ratio_label), 2)))
-
-
+                               (torch.pow(width_ratio2_output - width_ratio_label, 2) +
+                                torch.pow(height_ratio2_output - height_ratio_label, 2)))
 
     obj_class_loss = torch.sum(objness_label * MSE_criterion(class_output, y_one_hot))
-
-
     noobj_class_loss = lambda_noobj * torch.sum(noobjness_label * MSE_criterion(class_output, y_one_hot))
 
-    objness1_loss = torch.sum(objness_label * torch.pow(objness1_output - objness_label, 2))
-    objness2_loss = torch.sum(objness_label * torch.pow(objness2_output - objness_label, 2))
+    objness1_loss = torch.sum(torch.pow(objness1_output - objness_label, 2))
+    objness2_loss = torch.sum(torch.pow(objness2_output - objness_label, 2))
 
     total_loss = (obj_coord1_loss + obj_size1_loss + obj_coord2_loss + obj_size2_loss + noobj_class_loss +
                   obj_class_loss + objness1_loss + objness2_loss) / b
 
-    return total_loss, obj_coord1_loss, obj_size1_loss, obj_coord2_loss, obj_size2_loss, obj_class_loss, noobj_class_loss, objness1_loss, objness2_loss
+    return total_loss
 
 def visualize_weights_distribution(net):
 
