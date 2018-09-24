@@ -1,2 +1,4 @@
 *.pyc
 *.tar
+-checkpoint.ipynb
+*-checkpoint.ipynb
