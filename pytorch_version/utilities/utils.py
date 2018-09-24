@@ -2,6 +2,9 @@ import numpy as np
 import torch
 import imgaug as ia
 
+import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
+
 num_classes = 1
 
 def one_hot(output , label):
@@ -58,7 +61,7 @@ def detection_collate_with_size(batch):
             # object row follow as
             # [objectness, class, x offset, y offset, width ratio, height ratio]
             np_label[grid_x_index-1][grid_y_index-1] = np.array([objectness, cls, x_offset, y_offset, w_ratio, h_ratio])
-            
+
         label = torch.from_numpy(np_label)
         targets.append(label)
 
@@ -157,5 +160,65 @@ def GetYoloStyleBBoxes(bbs_aug, image_width, image_height):
         
     return normed_bbs_aug
 
+def visualize_GT(images, labels, cls_list):
+    Ibatch, Iw, Ih, Ic = images.shape
+    Lbatch, Lw, Lh, Lc = labels.shape
 
+    assert (Ibatch == Lbatch)
 
+    images = torch.mul(images, 255)
+
+    for i in range(Ibatch):
+        image = images.type(torch.ByteTensor)
+
+        img = image[i, :, :, :].cpu().data.numpy()
+        label = labels[i, :, :].cpu().data.numpy()
+
+        # Draw 7x7 Grid in Image
+        dx = Iw // 7
+        dy = Ih // 7
+
+        color = np.array([255, 0, 0])
+
+        img[:,:: dy] = color
+        img[::dx,:] = color
+
+        #print(label.shape)
+        #print(label[:,:,0])
+
+        obj_coord = label[:,:,0]
+        cls = label[:,:,1]
+        x_shift = label[:,:,2]
+        y_shift = label[:, :, 3]
+        w_ratio = label[:, :, 4]
+        h_ratio = label[:, :, 5]
+
+        _img= Image.fromarray(img, 'RGB')
+        draw = ImageDraw.Draw(_img)
+
+        for i in range(7):
+            for j in range(7):
+                if obj_coord[i][j] == 1:
+
+                    x_center = dx*i + int(dx*x_shift[i][j])
+                    y_center = dy*j + int(dy*y_shift[i][j])
+                    width = int(w_ratio[i][j] * Iw)
+                    height = int(h_ratio[i][j] * Ih)
+
+                    xmin = x_center - (width//2)
+                    ymin = y_center - (height//2)
+                    xmax = xmin + width
+                    ymax = ymin + height
+
+                    draw.rectangle(((xmin, ymin),(xmax, ymax)), outline="blue")
+
+                    draw.rectangle(((dx * i, dy * j), (dx * i + dx, dy * j + dy)), outline='#00ff88')
+                    draw.ellipse(((x_center - 2, y_center - 2),
+                                  (x_center + 2, y_center + 2)),
+                                 fill='blue')
+                    draw.text((dx * i, dy * j), cls_list[int(cls[i][j])])
+
+        plt.figure()
+        plt.imshow(_img)
+        plt.show()
+        plt.close()
