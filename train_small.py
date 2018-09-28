@@ -1,39 +1,35 @@
+import sys
+
+import warnings
 import shutil
+import numpy as np
+import matplotlib.pyplot as plt
+
 import torch
 import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
-import sys
-sys.path.append('../')
-sys.path.append('../../')
+import imgaug as ia
+import visdom
 
-from torchsummary.torchsummary import summary
-
-import numpy as np
-import matplotlib.pyplot as plt
 import yolov1_small
 
+from PIL import Image
+from torchsummary.torchsummary import summary
 from utilities import dataloader
-from utilities.utils import detection_collate_with_size
+from utilities.dataloader import detection_collate
+from utilities.dataloader import VOC
 from utilities.utils import save_checkpoint
 from utilities.utils import create_vis_plot
 from utilities.utils import update_vis_plot
 from utilities.augmentation import Augmenter
 from yolov1_small import detection_loss_4_small_yolo
-from dataloader import VOC
-
-import imgaug as ia
 from imgaug import augmenters as iaa
-from PIL import Image
 
-# Ignore warnings
-import warnings
 warnings.filterwarnings("ignore")
 
 plt.ion()   # interactive mode
 
-#0. Visdom on
-import visdom
 viz = visdom.Visdom(use_incoming_socket=False)
 vis_title = 'Yolo V1 Deepbaksu_vision (feat. martin, visionNoob) PyTorch on ' + 'VOC'
 vis_legend = ['Train Loss']
@@ -55,7 +51,7 @@ batch_size = 15
 learning_rate = 1e-3
 dropout_prop = 0.5
 
-DATASET_PATH_MARTIN = "/media/keti-ai/AI_HARD3/DataSets/VOC_Pascal/VOC/VOCdevkit/VOC2012"
+DATASET_PATH_MARTIN = "/home/martin/Desktop/5class/_class_balance/"
 DATASET_PATH_JAEWON = "H:\VOC\VOC12\VOCdevkit_2\VOC2012"
 SMALL_DATASET_PATH = "H:/person-300"
 
@@ -82,13 +78,12 @@ else:
 composed = transforms.Compose([Augmenter(seq)])
     
 #3. Load Dataset
-train_dataset = VOC(root = DATASET_PATH, transform=composed, cls_option = True, selective_cls="person")
+train_dataset = VOC(root = DATASET_PATH_MARTIN, transform=composed, class_path="names/5class.names")
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                            batch_size = batch_size,
                                            shuffle = True,
-                                           collate_fn=detection_collate_with_size)
-
+                                           collate_fn=detection_collate)
 
 #4. Sanity Check for dataloader
 if(USE_SANITY_CHECK):
@@ -175,8 +170,6 @@ for epoch in range(num_epochs):
             update_vis_plot(viz, (epoch + 1) * batch_size + (i + 1), noobjness1_loss, noobjectness1_plot, None, 'append')
             update_vis_plot(viz, (epoch + 1) * batch_size + (i + 1), objness1_loss, objectness1_plot, None, 'append')
 
-
-            
 
     if (epoch % 300) == 0:
         save_checkpoint({
