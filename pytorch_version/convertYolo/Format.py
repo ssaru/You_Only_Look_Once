@@ -283,8 +283,10 @@ class VOC:
 
                     if cls_option==True:
                         annotation["objects"]["num_obj"] = obj_index
+                    #else:
+                        #annotation["objects"]["num_obj"] = obj_index
 
-                    data[root.find("filename").text.split(".")[0]] = annotation
+                    data[filename.split(".")[0]] = annotation
 
                 printProgressBar(progress_cnt + 1, progress_length, prefix='VOC Parsing:'.ljust(15), suffix='Complete', length=40)
                 progress_cnt += 1
