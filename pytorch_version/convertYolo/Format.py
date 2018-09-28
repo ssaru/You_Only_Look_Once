@@ -216,7 +216,7 @@ class VOC:
             return False, msg
 
     @staticmethod
-    def parse(path, cls_option=False, selective_cls=None):
+    def parse(path):
         try:
 
             (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(path)))
@@ -264,15 +264,9 @@ class VOC:
                     }
                     tmp["bndbox"] = bndbox
 
-                    if (cls_option==True) and (selective_cls != None):
-                        if _object.find("name").text != selective_cls:
-                            continue
-                        else:
-                            obj[str(obj_index)] = tmp
-                            obj_index += 1
-                    else:
-                        obj[str(obj_index)] = tmp
-                        obj_index += 1
+
+                    obj[str(obj_index)] = tmp
+                    obj_index += 1
 
                 annotation = {
                     "size": size,
@@ -280,11 +274,6 @@ class VOC:
                 }
 
                 if obj_index != 0:
-
-                    if cls_option==True:
-                        annotation["objects"]["num_obj"] = obj_index
-                    #else:
-                        #annotation["objects"]["num_obj"] = obj_index
 
                     data[filename.split(".")[0]] = annotation
 
