@@ -201,20 +201,25 @@ def detection_loss_4_small_yolo(output, target):
     MSE_criterion = nn.MSELoss()
 
     # output tensor slice
-    objness1_output = output[:, :, :, 0]
-    x_offset1_output = output[:, :, :, 1]
-    y_offset1_output = output[:, :, :, 2]
-    width_ratio1_output = output[:, :, :, 3]
-    height_ratio1_output = output[:, :, :, 4]
+    x_offset1_output = output[:, :, :, 0]
+    y_offset1_output = output[:, :, :, 1]
+    width_ratio1_output = output[:, :, :, 2]
+    height_ratio1_output = output[:, :, :, 3]
+    objness1_output = output[:, :, :, 4]
     class_output = output[:, :, :, 5]
 
     # label tensor slice
-    objness_label = target[:, :, :, 0]
-    class_label = target[:, :, :, 1]
-    x_offset_label = target[:, :, :, 2]
-    y_offset_label = target[:, :, :, 3]
-    width_ratio_label = target[:, :, :, 4]
-    height_ratio_label = target[:, :, :, 5]
+    x_offset_label = target[:, :, :, 0]
+    y_offset_label = target[:, :, :, 1]
+    width_ratio_label = target[:, :, :, 2]
+    height_ratio_label = target[:, :, :, 3]
+    objness_label = target[:, :, :, 4]
+    class_label = target[:, :, :, 5]
+    
+    #Apply sigmoid 
+    sigmoid = nn.Sigmoid()
+    objness1_output = sigmoid(objness1_output)
+    class_output = sigmoid(class_output)
     
     noobjness_label = torch.neg(torch.add(objness_label, -1))
 
@@ -229,10 +234,8 @@ def detection_loss_4_small_yolo(output, target):
                                 torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
 
     obj_class_loss = torch.sum(objness_label * torch.pow(class_output - class_label, 2))
-    
     noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness1_output - objness_label, 2))
-    
-    objness1_loss = torch.sum(objness_label * torch.pow(objness1_output - objness_label, 2))
+    objness1_loss =                  torch.sum(  objness_label * torch.pow(objness1_output - objness_label, 2))
 
     total_loss = (obj_coord1_loss + obj_size1_loss + noobjness1_loss  + objness1_loss + obj_class_loss) / b
 

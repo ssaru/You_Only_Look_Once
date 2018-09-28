@@ -35,14 +35,14 @@ class VOC(data.Dataset):
         => future works. now it's not implementation
 
     """
-
+    
     #CLASSES = "./voc.names"
-    CLASSES = "./person.names"
+    #CLASSES = "./person.names"
     IMAGE_FOLDER = "JPEGImages"
     LABEL_FOLDER = "Annotations"
     IMG_EXTENSIONS = '.jpg'
 
-    def __init__(self, root, train=True, transform=None, target_transform=None, resize=448, cls_option=False, selective_cls=None):
+    def __init__(self, root, CLASSES_PATH, train=True, transform=None, target_transform=None, resize=448, cls_option=False, selective_cls=None):
         self.root = os.path.expanduser(root)
         self.transform = transform
         self.target_transform = target_transform
@@ -50,9 +50,9 @@ class VOC(data.Dataset):
         self.resize_factor = resize
         self.cls_option = cls_option
         self.selective_cls = selective_cls
-
-        with open("./voc.names") as f:
-            self.classes = f.read().splitlines()
+        self.CLASSES = CLASSES_PATH
+        #with open("./voc.names") as f:
+        #    self.classes = f.read().splitlines()
 
         if not self._check_exists():
             raise RuntimeError("Dataset not found.")
