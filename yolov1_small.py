@@ -1,4 +1,5 @@
 import shutil
+
 import torch
 import torch.nn as nn
 import torchvision
@@ -13,15 +14,13 @@ import matplotlib.pyplot as plt
 
 import visdom
 
-# Hyper parameters
-num_epochs = 16000
-num_classes = 1
-batch_size = 64
-learning_rate = 5e-5
-dropout_prop = 0.5
 
 class SmallYOLOv1(nn.Module):
-    def __init__(self):
+    def __init__(self, params):
+
+        self.dropout_prop = params["dropout"]
+        self.num_classes = params["num_class"]
+
         super(SmallYOLOv1, self).__init__()
         # LAYER 1
         self.layer1 = nn.Sequential(
@@ -138,14 +137,13 @@ class SmallYOLOv1(nn.Module):
         self.fc1 = nn.Sequential(
             nn.Linear(7*7*1024, 4096),
             nn.LeakyReLU(),
-            nn.Dropout(dropout_prop)
+            nn.Dropout(self.dropout_prop)
         )
 
         self.fc2 = nn.Sequential(
-            nn.Linear(4096, 7*7*((5)+num_classes)),
-            nn.Dropout(dropout_prop),
+            nn.Linear(4096, 7*7*((5)+self.num_classes)),
+            nn.Dropout(self.dropout_prop),
         )
-
 
         for m in self.modules():
 
@@ -184,7 +182,7 @@ class SmallYOLOv1(nn.Module):
         out = out.reshape(out.size(0), -1)
         out = self.fc1(out)
         out = self.fc2(out)
-        out = out.reshape((-1,7,7,((5)+num_classes)))
+        out = out.reshape((-1,7,7,((5)+self.num_classes)))
 
         return out
     

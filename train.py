@@ -16,7 +16,7 @@ from utilities.utils import create_vis_plot
 from utilities.utils import update_vis_plot
 from utilities.utils import visualize_GT
 
-from utilities.dataloader_test import detection_collate
+from utilities.dataloader import detection_collate
 import yolov1
 
 viz = visdom.Visdom()
@@ -54,9 +54,9 @@ TT = "/home/keti-1080ti/Documents/dev/Yolov1/dataset/"
 DATASET_PATH_MARTIN_LAP = "/home/martin/Desktop/5class/_class_balance/"
 DATASET_PATH_MARTIN_COM = "/home/martin/Desktop/_class_balance/"
 DATASET_PATH_JAEWON = "D:\dataset\VOC2012"
-# transforms.ToTensor()
-train_dataset = VOC(root = DATASET_PATH_MARTIN_COM,
-                    transform=None, cls_option = False, selective_cls=None)
+
+
+train_dataset = VOC(root = DATASET_PATH_MARTIN_COM, transform=None)
 
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                            batch_size = batch_size,
@@ -64,6 +64,7 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                            collate_fn=detection_collate)
 
 
+"""
 net = yolov1.YOLOv1()
 # visualize_weights_distribution(net)
 
@@ -156,3 +157,5 @@ with open("train_log.txt", "w") as f:
             }, False, filename='checkpoint_{}.pth.tar'.format(epoch))
 
     f.close()
+
+"""

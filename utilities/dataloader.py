@@ -3,12 +3,15 @@ import os
 
 import torch
 import torch.utils.data as data
-import matplotlib.pyplot as plt
 import numpy as np
+
 from PIL import Image
 
 from convertYolo.Format import YOLO as cvtYOLO
 from convertYolo.Format import VOC as cvtVOC
+
+# develop
+import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -19,7 +22,7 @@ def detection_collate(batch):
         batch : batch data ``batch[0]`` : image, ``batch[1]`` : label, ``batch[3]`` : size
 
     Return:
-        image tensor, label tensor, sizes
+        image tensor, label tensor
 
     Future work:
         return value(torch.stack) change to Torch.FloatTensor()
@@ -57,6 +60,7 @@ def detection_collate(batch):
             # [objectness, class, x offset, y offset, width ratio, height ratio]
             np_label[grid_x_index][grid_y_index] = np.array([objectness, cls, x_offset, y_offset, w_ratio, h_ratio])
 
+
         label = torch.from_numpy(np_label)
         targets.append(label)
 
@@ -89,6 +93,7 @@ class VOC(data.Dataset):
         self.target_transform = target_transform
         self.train = train
         self.resize_factor = resize
+        self.class_path = class_path
 
         with open(class_path) as f:
             self.classes = f.read().splitlines()
@@ -99,7 +104,6 @@ class VOC(data.Dataset):
         self.data = self.cvtData()
 
     def _check_exists(self):
-
         print("Image Folder : {}".format(os.path.join(self.root, self.IMAGE_FOLDER)))
         print("Label Folder : {}".format(os.path.join(self.root, self.LABEL_FOLDER)))
 
@@ -110,7 +114,8 @@ class VOC(data.Dataset):
 
         result = []
         voc = cvtVOC()
-        yolo = cvtYOLO(os.path.abspath(self.classes))
+
+        yolo = cvtYOLO(os.path.abspath(self.class_path))
         flag, self.dict_data =voc.parse(os.path.join(self.root, self.LABEL_FOLDER))
 
         try:
@@ -152,31 +157,28 @@ class VOC(data.Dataset):
             tuple: Tuple(image, target). target is the object returned by YOLO annotation as
             [
                 [   class,
-                    x of center point,
+                  print("Hello")  x of center point,
                     y of center point,
                     width represented ratio of image width,
                     height represented ratio of image height
                 ]
             ]
+
         """
 
         key = list(self.data[index].keys())[0]
+
         img = Image.open(key).convert('RGB')
         current_shape = img.size
         img = img.resize((self.resize_factor, self.resize_factor))
-        img = np.array(img.getdata(), dtype=np.float).reshape(img.size[0], img.size[1], 3)
+
         target = self.data[index][key]
 
         if self.transform is not None:
-            print("It's not supported, transform parameter should be None")
-            exit()
-
-        else:
-            img = torch.FloatTensor(img)
-            img = torch.div(img, 255)
+            img = self.transform(img)
 
         if self.target_transform is not None:
             # Future works
             pass
-        
+
         return img, target, current_shape
