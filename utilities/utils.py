@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import imgaug as ia
+import torchvision.transforms as transforms
 
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
@@ -114,30 +115,46 @@ def GetYoloStyleBBoxes(bbs_aug, image_width, image_height):
     return normed_bbs_aug
 
 def visualize_GT(images, labels, cls_list):
-    Ibatch, Iw, Ih, Ic = images.shape
+    import numpy as np
+    from PIL import Image
+
+    images = images.cpu()
+    labels = labels.cpu()
+
+    Ibatch, Ic, Iw, Ih = images.shape
     Lbatch, Lw, Lh, Lc = labels.shape
 
     assert (Ibatch == Lbatch)
 
-    images = torch.mul(images, 255)
-
     for i in range(Ibatch):
-        image = images.type(torch.ByteTensor)
 
-        img = image[i, :, :, :].cpu().data.numpy()
-        label = labels[i, :, :].cpu().data.numpy()
+        img = images[i, :, :, :]
+        label = labels[i, :, :]
+
+        # Convert PIL Image
+        img = transforms.ToPILImage()(img)
+        W, H = img.size
+
+        # declare draw object
+        draw = ImageDraw.Draw(img)
 
         # Draw 7x7 Grid in Image
-        dx = Iw // 7
-        dy = Ih // 7
+        dx = W // 7
+        dy = H // 7
 
-        color = np.array([255, 0, 0])
+        y_start = 0
+        y_end = H
 
-        img[:,:: dy] = color
-        img[::dx,:] = color
+        for i in range(0, W, dx):
+            line = ((i, y_start),(i, y_end))
+            draw.line(line, fill="red")
 
-        #print(label.shape)
-        #print(label[:,:,0])
+        x_start = 0
+        x_end = W
+        for i in range(0, H, dy):
+            line = ((x_start, i),(x_end, i))
+            draw.line(line, fill="red")
+
 
         obj_coord = label[:,:,0]
         cls = label[:,:,1]
@@ -145,9 +162,6 @@ def visualize_GT(images, labels, cls_list):
         y_shift = label[:, :, 3]
         w_ratio = label[:, :, 4]
         h_ratio = label[:, :, 5]
-
-        _img= Image.fromarray(img, 'RGB')
-        draw = ImageDraw.Draw(_img)
 
         for i in range(7):
             for j in range(7):
@@ -172,6 +186,6 @@ def visualize_GT(images, labels, cls_list):
                     draw.text((dx * i, dy * j), cls_list[int(cls[i][j])])
 
         plt.figure()
-        plt.imshow(_img)
+        plt.imshow(img)
         plt.show()
         plt.close()

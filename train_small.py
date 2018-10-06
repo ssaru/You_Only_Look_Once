@@ -24,6 +24,7 @@ from utilities.dataloader import VOC
 from utilities.utils import save_checkpoint
 from utilities.utils import create_vis_plot
 from utilities.utils import update_vis_plot
+from utilities.utils import visualize_GT
 from utilities.augmentation import Augmenter
 from yolov1_small import detection_loss_4_small_yolo
 from imgaug import augmenters as iaa
@@ -49,6 +50,7 @@ parser.add_argument('--checkpoint_path',           type=str,   help='path to a s
 parser.add_argument('--use_augmentation',          type=bool,  help='Image Augmentation', default=True)
 parser.add_argument('--use_visdom',                type=bool,  help='visdom board', default=True)
 parser.add_argument('--use_summary',               type=bool,  help='descripte Model summary', default=True)
+parser.add_argument('--use_gtcheck',               type=bool,  help='Ground Truth check flag', default=False)
 
 # develop
 parser.add_argument('--num_class',                 type=int,  help='number of class', default=5, required=True)
@@ -59,8 +61,8 @@ def train(params):
 
     # future work variable
     dataset             = params["dataset"]
-    input_height = params["input_height"]
-    input_width = params["input_width"]
+    input_height        = params["input_height"]
+    input_width         = params["input_width"]
 
     data_path           = params["data_path"]
     class_path          = params["class_path"]
@@ -74,10 +76,12 @@ def train(params):
     USE_VISDOM          = params["use_visdom"]
     USE_SUMMARY         = params["use_summary"]
     USE_AUGMENTATION    = params["use_augmentation"]
+    USE_GTCHECKER       = params["use_gtcheck"]
 
     num_class           = params["num_class"]
 
-
+    with open(class_path) as f:
+        class_list = f.read().splitlines()
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -140,15 +144,12 @@ def train(params):
 
         for i, (images, labels, sizes) in enumerate(train_loader):
 
-            print(images)
-            print(images.shape)
-            print()
-            exit()
+            if USE_GTCHECKER:
+                visualize_GT(images, labels, class_list)
+                exit()
 
             images = images.to(device)
             labels = labels.to(device)
-
-
 
             # Forward pass
             outputs = model(images)
@@ -160,9 +161,6 @@ def train(params):
             obj_class_loss, \
             noobjness1_loss, \
             objness1_loss = detection_loss_4_small_yolo(outputs, labels)
-            # objness2_loss = yolov1.detection_loss(outputs, labels)
-
-
 
             # Backward and optimize
             optimizer.zero_grad()
@@ -222,7 +220,8 @@ def main():
         "use_summary"       : args.use_summary,
         "use_augmentation"  : args.use_augmentation,
 
-        "num_class"         : args.num_class
+        "num_class"         : args.num_class,
+        "use_gtcheck"       : args.use_gtcheck
 
     }
 
