@@ -15,13 +15,13 @@ import matplotlib.pyplot as plt
 import visdom
 
 
-class SmallYOLOv1(nn.Module):
+class YOLOv1(nn.Module):
     def __init__(self, params):
 
         self.dropout_prop = params["dropout"]
         self.num_classes = params["num_class"]
 
-        super(SmallYOLOv1, self).__init__()
+        super(YOLOv1, self).__init__()
         # LAYER 1
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
@@ -186,7 +186,7 @@ class SmallYOLOv1(nn.Module):
 
         return out
     
-def detection_loss_4_small_yolo(output, target):
+def detection_loss_4_yolo(output, target):
     from utilities.utils import one_hot
 
     # hyper parameter
