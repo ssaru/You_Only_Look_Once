@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import imgaug as ia
 import torchvision.transforms as transforms
+import torch
 
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
@@ -20,7 +21,10 @@ def one_hot(output , label):
 
                 dst[k][i][j][int(label[k][i][j])] = 1.
 
-    return torch.from_numpy(dst)
+    result = torch.from_numpy(dst)
+    result = result.type(torch.FloatTensor).cuda()
+
+    return result
 
 # visdom function
 
@@ -51,19 +55,6 @@ def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     if is_best:
         shutil.copyfile(filename, 'model_best.pth.tar')
 
-def one_hot(output , label):
-
-    label = label.cpu().data.numpy()
-    b, s1, s2, c = output.shape
-    dst = np.zeros([b,s1,s2,c], dtype=np.float32)
-
-    for k in range(b):
-        for i in range(s1):
-            for j in range(s2):
-
-                dst[k][i][j][int(label[k][i][j])] = 1.
-
-    return torch.from_numpy(dst)
 
 def CvtCoordsXXYY2XYWH(image_width, image_height, xmin, xmax, ymin, ymax):
     #calculate bbox_center
