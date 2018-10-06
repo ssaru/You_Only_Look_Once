@@ -2,3 +2,4 @@
 *.tar
 -checkpoint.ipynb
 *-checkpoint.ipynb
+script/
