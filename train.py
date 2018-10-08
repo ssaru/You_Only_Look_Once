@@ -39,7 +39,7 @@ parser.add_argument('--data_path',                 type=str,   help='path to the
 parser.add_argument('--class_path',                type=str,   help='path to the filenames text file', required=True)
 parser.add_argument('--input_height',              type=int,   help='input height', default=448)
 parser.add_argument('--input_width',               type=int,   help='input width', default=448)
-parser.add_argument('--batch_size',                type=int,   help='batch size', default=15)
+parser.add_argument('--batch_size',                type=int,   help='batch size', default=16)
 parser.add_argument('--num_epochs',                type=int,   help='number of epochs', default=16000)
 parser.add_argument('--learning_rate',             type=float, help='initial learning rate', default=1e-3)
 parser.add_argument('--dropout',                   type=float, help='dropout probability', default=0.5)
@@ -137,12 +137,17 @@ def train(params):
 
     # Train the model
     total_step = len(train_loader)
+
+    total_train_step = num_epochs * total_step
+
     for epoch in range(num_epochs):
 
         if (epoch == 200) or (epoch == 400) or (epoch == 600) or (epoch == 20000) or (epoch == 30000):
             scheduler.step()
 
         for i, (images, labels, sizes) in enumerate(train_loader):
+
+            current_train_step = (epoch) * total_step + (i+1)
 
             if USE_GTCHECKER:
                 visualize_GT(images, labels, class_list)
@@ -167,10 +172,12 @@ def train(params):
             loss.backward()
             optimizer.step()
 
-            if (i + 1) % 10 == 0:
+            if (((current_train_step) % 100) == 0) or (current_train_step % 10 == 0 and current_train_step < 100):
                 print(
-                    'Epoch ,[{}/{}] ,Step ,[{}/{}] ,lr ,{} ,total_loss ,{:.4f} ,coord1 ,{} ,size1 ,{} ,noobj_clss ,{} ,objness1 ,{} ,'
-                    .format(epoch + 1,
+                    'train steop [{}/{}], Epoch [{}/{}] ,Step [{}/{}] ,lr ,{} ,total_loss ,{:.4f} ,coord1 ,{} ,size1 ,{} ,noobj_clss ,{} ,objness1 ,{} ,'
+                    .format(current_train_step,
+                            total_train_step,
+                            epoch + 1,
                             num_epochs,
                             i + 1,
                             total_step,
@@ -184,16 +191,16 @@ def train(params):
                             ))
 
                 if USE_VISDOM:
-                    update_vis_plot(viz, (epoch + 1) * batch_size + (i + 1), loss.item(), iter_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * batch_size + (i + 1), obj_coord1_loss, coord1_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * batch_size + (i + 1), obj_size1_loss, size1_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * batch_size + (i + 1), obj_class_loss, obj_cls_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * batch_size + (i + 1), noobjness1_loss, noobjectness1_plot, None,
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), loss.item(), iter_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_coord1_loss, coord1_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_size1_loss, size1_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_class_loss, obj_cls_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None,
                                     'append')
-                    update_vis_plot(viz, (epoch + 1) * batch_size + (i + 1), objness1_loss, objectness1_plot, None,
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
                                     'append')
 
-        if (epoch % 300) == 0:
+        if ((epoch % 1000) == 0) and (epoch != 0):
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': "YOLOv1",
