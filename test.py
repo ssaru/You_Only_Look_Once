@@ -27,9 +27,9 @@ def test(params):
 
     net = yolov1.YOLOv1(params={"dropout": 1.0, "num_class": num_class})
     model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
-    model.load_state_dict(torch.load(checkpoint_path))
+    model.load_state_dict(torch.load(checkpoint_path)["state_dict"])
     model.eval()
-    transform = transforms.ToTensor()
+
 
     if USE_SUMMARY:
         summary(model, (3, 448, 448))
@@ -44,17 +44,16 @@ def test(params):
         img = Image.open(os.path.join(data_path, file)).convert('RGB')
         img_size = img.size
         img = img.resize((input_width, input_height))
-        img = transform(img)
-
-        print(img)
-        print(type(img))
-        print(img.shape)
-        exit()
+        img = transforms.ToTensor()(img)
+        c, w, h = img.shape
+        img = img.view(1, c, w, h)
 
         img = img.to(device)
 
         outputs = model(img)
         print(outputs)
+        print(outputs.shape)
+        exit()
 
 
     pass
