@@ -117,7 +117,7 @@ def train(params):
     # 3. Load Dataset
     # composed
     # transforms.ToTensor
-    train_dataset = VOC(root=data_path, transform=transforms.ToTensor(), class_path=class_path)
+    train_dataset = VOC(root=data_path, transform=composed, class_path=class_path)
 
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=batch_size,
