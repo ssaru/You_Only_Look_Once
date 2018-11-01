@@ -2,10 +2,11 @@ import os
 import torch
 import yolov1
 import matplotlib.pyplot as plt
+import numpy as np
 
 from torchvision import transforms
 from torchsummary.torchsummary import summary
-from PIL import Image
+from PIL import Image, ImageDraw
 
 def test(params):
 
@@ -23,6 +24,9 @@ def test(params):
 
     with open(class_path) as f:
         class_list = f.read().splitlines()
+
+    objness_threshold = 0.1
+
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -43,66 +47,92 @@ def test(params):
             continue
 
         img = Image.open(os.path.join(data_path, file)).convert('RGB')
-        plt.imshow(img)
-        plt.show()
-        plt.close()
-        img_size = img.size
-        img = img.resize((input_width, input_height))
-        img = transforms.ToTensor()(img)
-        c, w, h = img.shape
-        img = img.view(1, c, w, h)
 
-        img = img.to(device)
+        # PRE-PROCESSING
+        input_img = img.resize((input_width, input_height))
+        input_img = transforms.ToTensor()(input_img)
+        c, w, h = input_img.shape
 
-        outputs = model(img)
+        # INVERSE TRANSFORM IMAGE########
+        inverseTimg = transforms.ToPILImage()(input_img)
+        W, H = inverseTimg.size
+        draw = ImageDraw.Draw(inverseTimg)
+
+        dx = W // 7
+        dy = H // 7
+        ##################################
+
+        input_img = input_img.view(1, c, w, h)
+        input_img = input_img.to(device)
+
+        # INFERENCE
+        outputs = model(input_img)
         b, w, h, c = outputs.shape
 
         outputs = outputs.view(w, h, c)
-        print(outputs)
-        print(outputs.shape)
+        outputs_np = outputs.cpu().data.numpy()
 
         objness = outputs[:, :, 0].cpu().data.numpy()
-        x_shift = outputs[:, :, 1].cpu().data.numpy()
-        y_shift = outputs[:, :, 2].cpu().data.numpy()
-        w_ratio = outputs[:, :, 3].cpu().data.numpy()
-        h_ratio = outputs[:, :, 4].cpu().data.numpy()
-        clsprob = outputs[:, :, 5:].cpu().data.numpy()
 
-        _, _, c = clsprob.shape
-
-        """
-        for i in range(c):
-            clsprob[:,:,i] = objness * clsprob[:,:,i]
-        """
-        print(objness.shape)
-        print(x_shift.shape)
-        print(y_shift.shape)
-        print(w_ratio.shape)
-        print(h_ratio.shape)
-        print(clsprob.shape)
-
-        objness[objness > 0.1] = 1
-        objness[objness <= 0.1] = 0
-
-        print()
-        print("OBJECTNESS")
-        print()
-        print(outputs[:, :, 0])
-        print()
+        print("OBJECTNESS : {}".format(objness.shape))
         print(objness)
-        print()
-        print("TOTAL PROB")
-        print()
-        print(clsprob[:, :, 0])
-        print()
-        print(clsprob[:, :, 1])
-        print()
-        print(clsprob[:, :, 2])
-        print()
-        print(clsprob[:, :, 3])
-        print()
-        print(clsprob[:, :, 4])
-        exit()
+        print("\n\n\n")
+        print("IMAGE SIZE")
+        print("width : {}, height : {}".format(W, H))
+        print("\n\n\n")
 
+        try:
 
-    pass
+            for i in range(7):
+                for j in range(7):
+                    draw.rectangle(((dx * i, dy * j), (dx * i + dx, dy * j + dy)), outline='#00ff88')
+
+                    if objness[i][j] >= objness_threshold:
+                        block = outputs_np[i][j]
+
+                        x_start_point = dx * i
+                        y_start_point = dy * j
+                        x_shift = block[1]
+                        y_shift = block[2]
+                        center_x = int(x_start_point + x_shift * dx)
+                        center_y = int(y_start_point + y_shift * dy)
+
+                        w_ratio = block[3]
+                        h_ratio = block[4]
+                        width = int(w_ratio * W)
+                        height = int(h_ratio * H)
+
+                        xmin = center_x - (width//2)
+                        ymin = center_y - (height // 2)
+                        xmax = xmin + width
+                        ymax = ymin + height
+
+                        clsprob = block[5:]
+                        cls_idx = np.argmax(clsprob)
+
+                        draw.rectangle(((xmin, ymin), (xmax, ymax)), outline="blue")
+                        draw.text((xmin, ymin), class_list[cls_idx])
+                        draw.ellipse(((center_x - 2, center_y - 2),
+                                      (center_x + 2, center_y + 2)),
+                                     fill='blue')
+
+                        ## LOG
+                        print("idx : [{}][{}]".format(i, j))
+                        print("x shift : {}, y shift : {}".format(x_shift, y_shift))
+                        print("w ratio : {}, h ratio : {}".format(w_ratio, h_ratio))
+                        print("cls prob : {}".format(np.around(clsprob, decimals=2)))
+
+                        print("xmin : {}, ymin : {}, xmax : {}, ymax : {}".format(xmin, ymin, xmax, ymax))
+                        print("width : {} height : {}".format(width, height))
+                        print("class list : {}".format(class_list))
+                        print("\n\n\n")
+
+            plt.figure(figsize=(24,18))
+            plt.imshow(inverseTimg)
+            plt.show()
+            plt.close()
+
+        except Exception as e:
+            print("ERROR")
+            print("Message : {}".format(e))
+
