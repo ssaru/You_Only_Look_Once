@@ -79,7 +79,7 @@ def test(params):
         print("\n\n\n")
         print("IMAGE SIZE")
         print("width : {}, height : {}".format(W, H))
-        print("\n\n\n")
+        print("\n\n\n\n")
 
         try:
 
