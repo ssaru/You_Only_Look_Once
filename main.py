@@ -17,10 +17,10 @@ parser.add_argument('--num_gpus',                  type=int,   help='number of G
 parser.add_argument('--checkpoint_path',           type=str,   help='path to a specific checkpoint to load', default='./')
 
 # flag
-parser.add_argument('--use_augmentation',          type=bool,  help='Image Augmentation', default=True)
-parser.add_argument('--use_visdom',                type=bool,  help='visdom board', default=True)
-parser.add_argument('--use_summary',               type=bool,  help='descripte Model summary', default=True)
-parser.add_argument('--use_gtcheck',               type=bool,  help='Ground Truth check flag', default=False)
+parser.add_argument('--use_augmentation',          type=lambda x: (str(x).lower() == 'true'),  help='Image Augmentation', default=True)
+parser.add_argument('--use_visdom',                type=lambda x: (str(x).lower() == 'true'),  help='visdom board', default=True)
+parser.add_argument('--use_summary',               type=lambda x: (str(x).lower() == 'true'),  help='descripte Model summary', default=True)
+parser.add_argument('--use_gtcheck',               type=lambda x: (str(x).lower() == 'true'),  help='Ground Truth check flag', default=False)
 
 # develop
 parser.add_argument('--num_class',                 type=int,  help='number of class', default=5, required=True)
