@@ -3,9 +3,12 @@ from utilities.utils import CvtCoordsXXYY2XYWH
 from utilities.utils import CvtCoordsXYWH2XXYY
 from utilities.utils import GetImgaugStyleBBoxes
 from utilities.utils import GetYoloStyleBBoxes
+from utilities.utils import clippingBBox
 import imgaug as ia
 from imgaug import augmenters as iaa
 from PIL import Image
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import ImageGrid
 
 def augmentImage(image, normed_lxywhs, image_width, image_height, seq):
     
@@ -17,6 +20,8 @@ def augmentImage(image, normed_lxywhs, image_width, image_height, seq):
     
     bbs_aug = seq_det.augment_bounding_boxes([bbs])[0]
     
+    bbs_aug = clippingBBox(bbs_aug, image_width, image_height)
+
     if(False):
         image_before = bbs.draw_on_image(image, thickness=5)
         image_after = bbs_aug.draw_on_image(image_aug, thickness=5, color=[0, 0, 255])
