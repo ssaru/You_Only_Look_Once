@@ -10,6 +10,9 @@ from PIL import Image
 from convertYolo.Format import YOLO as cvtYOLO
 from convertYolo.Format import VOC as cvtVOC
 
+import torchvision
+import torchvision.transforms as transforms
+
 # develop
 import matplotlib.pyplot as plt
 
@@ -175,7 +178,8 @@ class VOC(data.Dataset):
         target = self.data[index][key]
 
         if self.transform is not None:
-            img = self.transform(img)
+            img, target = self.transform([img, target])
+            img = torchvision.transforms.ToTensor()(img)
 
         if self.target_transform is not None:
             # Future works
