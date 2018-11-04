@@ -25,7 +25,7 @@ def test(params):
     with open(class_path) as f:
         class_list = f.read().splitlines()
 
-    objness_threshold = 0.1
+    objness_threshold = 0.5
 
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
