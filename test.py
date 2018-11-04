@@ -72,6 +72,9 @@ def test(params):
         outputs = outputs.view(w, h, c)
         outputs_np = outputs.cpu().data.numpy()
 
+        outputs[:, :, 0] = torch.sigmoid(outputs[:, :, 0])
+        outputs[:, :, 5] = torch.sigmoid(outputs[:, :, 5])
+        
         objness = outputs[:, :, 0].cpu().data.numpy()
 
         print("OBJECTNESS : {}".format(objness.shape))
