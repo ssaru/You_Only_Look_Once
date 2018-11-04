@@ -39,14 +39,15 @@ def test(params):
     if USE_SUMMARY:
         summary(model, (3, 448, 448))
 
-    root, dir, files = next(os.walk(os.path.abspath(data_path)))
+    image_path = os.path.join(data_path, "JPEGImages")
+    root, dir, files = next(os.walk(os.path.abspath(image_path)))
 
     for file in files:
         extension = file.split(".")[-1]
         if extension not in ["jpeg", "jpg", "png", "JPEG","JPG", "PNG"]:
             continue
 
-        img = Image.open(os.path.join(data_path, file)).convert('RGB')
+        img = Image.open(os.path.join(image_path, file)).convert('RGB')
 
         # PRE-PROCESSING
         input_img = img.resize((input_width, input_height))
