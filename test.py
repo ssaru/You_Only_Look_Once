@@ -99,8 +99,8 @@ def test(params):
 
                         w_ratio = block[3]
                         h_ratio = block[4]
-                        width = int(w_ratio * W)
-                        height = int(h_ratio * H)
+                        width = int(np.sqrt(w_ratio) * W)
+                        height = int(np.sqrt(h_ratio) * H)
 
                         xmin = center_x - (width//2)
                         ymin = center_y - (height // 2)
