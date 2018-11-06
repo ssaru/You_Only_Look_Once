@@ -8,6 +8,7 @@ from torchvision import transforms
 from torchsummary.torchsummary import summary
 from PIL import Image, ImageDraw
 
+
 def test(params):
 
     input_height = params["input_height"]
@@ -27,7 +28,6 @@ def test(params):
 
     objness_threshold = 0.5
 
-
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     net = yolov1.YOLOv1(params={"dropout": 1.0, "num_class": num_class})
@@ -35,18 +35,18 @@ def test(params):
     model.load_state_dict(torch.load(checkpoint_path)["state_dict"])
     model.eval()
 
-
     if USE_SUMMARY:
         summary(model, (3, 448, 448))
 
-    root, dir, files = next(os.walk(os.path.abspath(data_path)))
+    image_path = os.path.join(data_path, "JPEGImages")
+    root, dir, files = next(os.walk(os.path.abspath(image_path)))
 
     for file in files:
         extension = file.split(".")[-1]
-        if extension not in ["jpeg", "jpg", "png", "JPEG","JPG", "PNG"]:
+        if extension not in ["jpeg", "jpg", "png", "JPEG", "JPG", "PNG"]:
             continue
 
-        img = Image.open(os.path.join(data_path, file)).convert('RGB')
+        img = Image.open(os.path.join(image_path, file)).convert('RGB')
 
         # PRE-PROCESSING
         input_img = img.resize((input_width, input_height))
@@ -54,9 +54,9 @@ def test(params):
         c, w, h = input_img.shape
 
         # INVERSE TRANSFORM IMAGE########
-        inverseTimg = transforms.ToPILImage()(input_img)
-        W, H = inverseTimg.size
-        draw = ImageDraw.Draw(inverseTimg)
+        # inverseTimg = transforms.ToPILImage()(input_img)
+        W, H = img.size
+        draw = ImageDraw.Draw(img)
 
         dx = W // 7
         dy = H // 7
@@ -74,7 +74,7 @@ def test(params):
 
         outputs[:, :, 0] = torch.sigmoid(outputs[:, :, 0])
         outputs[:, :, 5] = torch.sigmoid(outputs[:, :, 5])
-        
+
         objness = outputs[:, :, 0].cpu().data.numpy()
 
         print("OBJECTNESS : {}".format(objness.shape))
@@ -95,17 +95,20 @@ def test(params):
 
                         x_start_point = dx * i
                         y_start_point = dy * j
+
                         x_shift = block[1]
                         y_shift = block[2]
-                        center_x = int(x_start_point + x_shift * dx)
-                        center_y = int(y_start_point + y_shift * dy)
 
+                        center_x = int((block[1] * W / 7.0) + (i * W / 7.0))
+                        center_y = int((block[2] * H / 7.0) + (j * H / 7.0))
                         w_ratio = block[3]
                         h_ratio = block[4]
+                        w_ratio = w_ratio * w_ratio
+                        h_ratio = h_ratio * h_ratio
                         width = int(w_ratio * W)
                         height = int(h_ratio * H)
 
-                        xmin = center_x - (width//2)
+                        xmin = center_x - (width // 2)
                         ymin = center_y - (height // 2)
                         xmax = xmin + width
                         ymax = ymin + height
@@ -119,7 +122,7 @@ def test(params):
                                       (center_x + 2, center_y + 2)),
                                      fill='blue')
 
-                        ## LOG
+                        # LOG
                         print("idx : [{}][{}]".format(i, j))
                         print("x shift : {}, y shift : {}".format(x_shift, y_shift))
                         print("w ratio : {}, h ratio : {}".format(w_ratio, h_ratio))
@@ -130,12 +133,11 @@ def test(params):
                         print("class list : {}".format(class_list))
                         print("\n\n\n")
 
-            plt.figure(figsize=(24,18))
-            plt.imshow(inverseTimg)
+            plt.figure(figsize=(24, 18))
+            plt.imshow(img)
             plt.show()
             plt.close()
 
         except Exception as e:
             print("ERROR")
             print("Message : {}".format(e))
-
