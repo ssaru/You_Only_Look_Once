@@ -14,7 +14,7 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 def augmentImage(image, normed_lxywhs, image_width, image_height, seq):
 
     bbs = GetImgaugStyleBBoxes(normed_lxywhs, image_width, image_height)
-
+    
     seq_det = seq.to_deterministic()
 
     image_aug = seq_det.augment_images([image])[0]
@@ -33,11 +33,7 @@ def augmentImage(image, normed_lxywhs, image_width, image_height, seq):
                  axes_pad=0.1,  # pad between axes in inch.
                  )
 
-        # grid[0].imshow(image_before)
-        # grid[1].imshow(image_after)
-        # plt.show()
-
-    normed_bbs_aug = GetYoloStyleBBoxes(bbs_aug, image_width, image_height)
+    normed_bbs_aug = GetYoloStyleBBoxes(normed_lxywhs, bbs_aug, image_width, image_height)    
 
     return image_aug, normed_bbs_aug
 
@@ -48,7 +44,6 @@ class Augmenter(object):
         self.seq = seq
 
     def __call__(self, sample):
-        # image = sample
 
         image = sample[0]  # PIL image
         normed_lxywhs = sample[1]

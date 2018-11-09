@@ -28,8 +28,6 @@ def one_hot(output, label):
     return result
 
 # visdom function
-
-
 def create_vis_plot(viz, _xlabel, _ylabel, _title, _legend):
     return viz.line(
         X=torch.zeros((1,)).cpu(),
@@ -101,13 +99,13 @@ def GetImgaugStyleBBoxes(normed_lxywhs, image_width, image_height):
     return bbs
 
 
-def GetYoloStyleBBoxes(bbs_aug, image_width, image_height):
+def GetYoloStyleBBoxes(normed_lxywhs, bbs_aug, image_width, image_height):
     normed_bbs_aug = []
 
     for i in range(len(bbs_aug.bounding_boxes)):
         after = bbs_aug.bounding_boxes[i]
         coord = CvtCoordsXXYY2XYWH(image_width, image_height, xmin=after.x1, xmax=after.x2, ymin=after.y1, ymax=after.y2)
-        normed_bbs_aug.append([0, round(coord[0], 3), round(coord[1], 3), round(coord[2], 3), round(coord[3], 3)])
+        normed_bbs_aug.append([normed_lxywhs[i][0], round(coord[0], 3), round(coord[1], 3), round(coord[2], 3), round(coord[3], 3)])
 
     return normed_bbs_aug
 

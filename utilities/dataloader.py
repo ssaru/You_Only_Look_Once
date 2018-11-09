@@ -177,7 +177,7 @@ class VOC(data.Dataset):
         target = self.data[index][key]
 
         if self.transform is not None:
-            img, target = self.transform([img, target])
+            img, aug_target = self.transform([img, target])
             img = torchvision.transforms.ToTensor()(img)
 
         if self.target_transform is not None:
