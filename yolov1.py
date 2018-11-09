@@ -141,8 +141,7 @@ class YOLOv1(nn.Module):
         )
 
         self.fc2 = nn.Sequential(
-            nn.Linear(4096, 7*7*((5)+self.num_classes)),
-            nn.Dropout(self.dropout_prop),
+            nn.Linear(4096, 7*7*((5)+self.num_classes))
         )
 
         for m in self.modules():
