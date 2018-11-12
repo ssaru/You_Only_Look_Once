@@ -182,6 +182,8 @@ class YOLOv1(nn.Module):
         out = self.fc1(out)
         out = self.fc2(out)
         out = out.reshape((-1, 7, 7, ((5) + self.num_classes)))
+        output[:, :, :, 0] = torch.sigmoid(output[:, :, :, 0])  # sigmoid to objness1_output
+        output[:, :, :, 5:] = torch.sigmoid(output[:, :, :, 5:])  # sigmoid to class_output
 
         return out
 
