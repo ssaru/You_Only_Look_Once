@@ -46,7 +46,7 @@ def detection_collate(batch):
         np_label = np.zeros((7, 7, 6), dtype=np.float32)
         for object in sample[1]:
             objectness = 1
-            cls = object[0]
+            classes = object[0]
             x_ratio = object[1]
             y_ratio = object[2]
             w_ratio = object[3]
