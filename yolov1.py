@@ -25,7 +25,7 @@ class YOLOv1(nn.Module):
         # LAYER 1
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
-            nn.BatchNorm2d(64), #, momentum=0.01
+            nn.BatchNorm2d(64),  # momentum=0.01
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
@@ -135,19 +135,19 @@ class YOLOv1(nn.Module):
             nn.LeakyReLU())
 
         self.fc1 = nn.Sequential(
-            nn.Linear(7*7*1024, 4096),
+            nn.Linear(7 * 7 * 1024, 4096),
             nn.LeakyReLU(),
             nn.Dropout(self.dropout_prop)
         )
 
         self.fc2 = nn.Sequential(
-            nn.Linear(4096, 7*7*((5)+self.num_classes))
+            nn.Linear(4096, 7 * 7 * ((5) + self.num_classes))
         )
 
         for m in self.modules():
 
             if isinstance(m, nn.Conv2d):
-                #nn.init.xavier_normal_(m.weight)
+                # nn.init.xavier_normal_(m.weight)
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity="leaky_relu")
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
@@ -181,10 +181,11 @@ class YOLOv1(nn.Module):
         out = out.reshape(out.size(0), -1)
         out = self.fc1(out)
         out = self.fc2(out)
-        out = out.reshape((-1,7,7,((5)+self.num_classes)))
+        out = out.reshape((-1, 7, 7, ((5) + self.num_classes)))
 
         return out
-    
+
+
 def detection_loss_4_yolo(output, target):
     from utilities.utils import one_hot
 
@@ -198,7 +199,7 @@ def detection_loss_4_yolo(output, target):
     _, _, _, n = output.shape
 
     # calc number of class
-    num_of_cls = n-5
+    num_of_cls = n - 5
 
     # class loss
     MSE_criterion = nn.MSELoss()
@@ -233,15 +234,14 @@ def detection_loss_4_yolo(output, target):
                                (torch.pow(width_ratio1_output - torch.sqrt(width_ratio_label), 2) +
                                 torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
 
-
     objectness_cls_map = torch.stack((objness_label, objness_label, objness_label, objness_label, objness_label), 3)
-    
-    objness1_loss =                  torch.sum(  objness_label * torch.pow(torch.sigmoid(objness1_output) - objness_label, 2))
+
+    objness1_loss = torch.sum(objness_label * torch.pow(torch.sigmoid(objness1_output) - objness_label, 2))
     noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(torch.sigmoid(objness1_output) - objness_label, 2))
 
     obj_class_loss = torch.sum(objectness_cls_map * torch.pow(torch.sigmoid(class_output) - class_label, 2))
 
-    total_loss = (obj_coord1_loss + obj_size1_loss + noobjness1_loss  + objness1_loss + obj_class_loss)
+    total_loss = (obj_coord1_loss + obj_size1_loss + noobjness1_loss + objness1_loss + obj_class_loss)
     total_loss = total_loss / b
 
-    return total_loss, obj_coord1_loss / b, obj_size1_loss/ b, obj_class_loss/ b, noobjness1_loss/ b, objness1_loss/ b
+    return total_loss, obj_coord1_loss / b, obj_size1_loss / b, obj_class_loss / b, noobjness1_loss / b, objness1_loss / b
