@@ -82,8 +82,8 @@ def test(params):
         print("\n\nORIGIN CLS PROB")
         print(outputs[:, :, 5:])
 
-        outputs[:, :, 0] = torch.sigmoid(outputs[:, :, 0])
-        outputs[:, :, 5:] = torch.sigmoid(outputs[:, :, 5:])
+        outputs[:, :, 0] = outputs[:, :, 0]
+        outputs[:, :, 5:] = outputs[:, :, 5:]
 
         objness = outputs[:, :, 0].cpu().data.numpy()
 
