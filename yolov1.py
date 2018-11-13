@@ -25,7 +25,7 @@ class YOLOv1(nn.Module):
         # LAYER 1
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
-            nn.BatchNorm2d(64),  # momentum=0.01
+            nn.BatchNorm2d(64),
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
@@ -147,7 +147,6 @@ class YOLOv1(nn.Module):
         for m in self.modules():
 
             if isinstance(m, nn.Conv2d):
-                # nn.init.xavier_normal_(m.weight)
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity="leaky_relu")
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
