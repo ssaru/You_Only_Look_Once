@@ -20,31 +20,30 @@ from yolov1 import detection_loss_4_yolo
 from imgaug import augmenters as iaa
 
 warnings.filterwarnings("ignore")
-#plt.ion()   # interactive mode
 
-# model = torch.nn.DataParallel(net, device_ids=[0]).cuda()
+
 def train(params):
 
     # future work variable
-    dataset             = params["dataset"]
-    input_height        = params["input_height"]
-    input_width         = params["input_width"]
+    dataset = params["dataset"]
+    input_height = params["input_height"]
+    input_width = params["input_width"]
 
-    data_path           = params["data_path"]
-    class_path          = params["class_path"]
-    batch_size          = params["batch_size"]
-    num_epochs          = params["num_epochs"]
-    learning_rate       = params["lr"]
-    dropout             = params["dropout"]
-    num_gpus            = [ i for i in range(params["num_gpus"])]
-    checkpoint_path     = params["checkpoint_path"]
+    data_path = params["data_path"]
+    class_path = params["class_path"]
+    batch_size = params["batch_size"]
+    num_epochs = params["num_epochs"]
+    learning_rate = params["lr"]
+    dropout = params["dropout"]
+    num_gpus = [i for i in range(params["num_gpus"])]
+    checkpoint_path = params["checkpoint_path"]
 
-    USE_VISDOM          = params["use_visdom"]
-    USE_SUMMARY         = params["use_summary"]
-    USE_AUGMENTATION    = params["use_augmentation"]
-    USE_GTCHECKER       = params["use_gtcheck"]
+    USE_VISDOM = params["use_visdom"]
+    USE_SUMMARY = params["use_summary"]
+    USE_AUGMENTATION = params["use_augmentation"]
+    USE_GTCHECKER = params["use_gtcheck"]
 
-    num_class           = params["num_class"]
+    num_class = params["num_class"]
 
     with open(class_path) as f:
         class_list = f.read().splitlines()
@@ -56,10 +55,17 @@ def train(params):
         vis_title = 'Yolo V1 Deepbaksu_vision (feat. martin, visionNoob) PyTorch on ' + 'VOC'
         vis_legend = ['Train Loss']
         iter_plot = create_vis_plot(viz, 'Iteration', 'Total Loss', vis_title, vis_legend)
+
         coord1_plot = create_vis_plot(viz, 'Iteration', 'coord1', vis_title, vis_legend)
         size1_plot = create_vis_plot(viz, 'Iteration', 'size1', vis_title, vis_legend)
         noobjectness1_plot = create_vis_plot(viz, 'Iteration', 'noobjectness1', vis_title, vis_legend)
         objectness1_plot = create_vis_plot(viz, 'Iteration', 'objectness1', vis_title, vis_legend)
+
+        coord2_plot = create_vis_plot(viz, 'Iteration', 'coord1', vis_title, vis_legend)
+        size2_plot = create_vis_plot(viz, 'Iteration', 'size1', vis_title, vis_legend)
+        noobjectness2_plot = create_vis_plot(viz, 'Iteration', 'noobjectness1', vis_title, vis_legend)
+        objectness2_plot = create_vis_plot(viz, 'Iteration', 'objectness1', vis_title, vis_legend)
+
         obj_cls_plot = create_vis_plot(viz, 'Iteration', 'obj_cls', vis_title, vis_legend)
 
     # 2. Data augmentation setting
@@ -91,7 +97,7 @@ def train(params):
                                                collate_fn=detection_collate)
 
     # 5. Load YOLOv1
-    net = yolov1.YOLOv1(params={"dropout" : dropout, "num_class" : num_class})
+    net = yolov1.YOLOv1(params={"dropout": dropout, "num_class": num_class})
     model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
 
     if USE_SUMMARY:
@@ -113,7 +119,7 @@ def train(params):
 
         for i, (images, labels, sizes) in enumerate(train_loader):
 
-            current_train_step = (epoch) * total_step + (i+1)
+            current_train_step = (epoch) * total_step + (i + 1)
 
             if USE_GTCHECKER:
                 visualize_GT(images, labels, class_list)
@@ -131,7 +137,11 @@ def train(params):
             obj_size1_loss, \
             obj_class_loss, \
             noobjness1_loss, \
-            objness1_loss = detection_loss_4_yolo(outputs, labels)
+            objness1_loss, \
+            obj_coord2_loss, \
+            obj_size2_loss, \
+            noobjness2_loss, \
+            objness2_loss = detection_loss_4_yolo(outputs, labels)
 
             # Backward and optimize
             optimizer.zero_grad()
@@ -140,7 +150,7 @@ def train(params):
 
             if (((current_train_step) % 100) == 0) or (current_train_step % 10 == 0 and current_train_step < 100):
                 print(
-                    'train steop [{}/{}], Epoch [{}/{}] ,Step [{}/{}] ,lr ,{} ,total_loss ,{:.4f} ,coord1 ,{} ,size1 ,{} ,noobj_clss ,{} ,objness1 ,{} ,'
+                    'train steop [{}/{}], Epoch [{}/{}] ,Step [{}/{}] ,lr ,{} ,total_loss ,{:.4f}'
                     .format(current_train_step,
                             total_train_step,
                             epoch + 1,
@@ -149,11 +159,6 @@ def train(params):
                             total_step,
                             [param_group['lr'] for param_group in optimizer.param_groups],
                             loss.item(),
-                            obj_coord1_loss,
-                            obj_size1_loss,
-                            obj_class_loss,
-                            noobjness1_loss,
-                            objness1_loss
                             ))
 
                 if USE_VISDOM:
@@ -165,11 +170,17 @@ def train(params):
                                     'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
                                     'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_coord1_loss, coord2_plot, None,
+                                    'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_size1_loss, size2_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness2_plot, None,
+                                    'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness2_plot, None,
+                                    'append')
 
         if ((epoch % 1000) == 0) and (epoch != 0):
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': "YOLOv1",
                 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-            }, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
+                'optimizer': optimizer.state_dict()}, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
