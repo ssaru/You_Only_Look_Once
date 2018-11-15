@@ -25,7 +25,7 @@ class YOLOv1(nn.Module):
         # LAYER 1
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
-            nn.BatchNorm2d(64),  # momentum=0.01
+            nn.BatchNorm2d(64),
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2))
 
@@ -141,14 +141,12 @@ class YOLOv1(nn.Module):
         )
 
         self.fc2 = nn.Sequential(
-            nn.Linear(4096, 7 * 7 * ((5) + self.num_classes)),
-            nn.Dropout(self.dropout_prop),
+            nn.Linear(4096, 7 * 7 * ((5) + self.num_classes))
         )
 
         for m in self.modules():
 
             if isinstance(m, nn.Conv2d):
-                # nn.init.xavier_normal_(m.weight)
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity="leaky_relu")
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
@@ -183,6 +181,8 @@ class YOLOv1(nn.Module):
         out = self.fc1(out)
         out = self.fc2(out)
         out = out.reshape((-1, 7, 7, ((5) + self.num_classes)))
+        out[:, :, :, 0] = torch.sigmoid(out[:, :, :, 0])  # sigmoid to objness1_output
+        out[:, :, :, 5:] = torch.sigmoid(out[:, :, :, 5:])  # sigmoid to class_output
 
         return out
 
@@ -236,10 +236,9 @@ def detection_loss_4_yolo(output, target):
                                 torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
 
     objectness_cls_map = torch.stack((objness_label, objness_label, objness_label, objness_label, objness_label), 3)
-    obj_class_loss = torch.sum(objectness_cls_map * torch.pow(class_output - class_label, 2))
-
-    noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness1_output - objness_label, 2))
     objness1_loss = torch.sum(objness_label * torch.pow(objness1_output - objness_label, 2))
+    noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness1_output - objness_label, 2))
+    obj_class_loss = torch.sum(objectness_cls_map * torch.pow(class_output - class_label, 2))
 
     total_loss = (obj_coord1_loss + obj_size1_loss + noobjness1_loss + objness1_loss + obj_class_loss)
     total_loss = total_loss / b

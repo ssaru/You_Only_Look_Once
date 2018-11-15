@@ -20,31 +20,32 @@ from yolov1 import detection_loss_4_yolo
 from imgaug import augmenters as iaa
 
 warnings.filterwarnings("ignore")
-#plt.ion()   # interactive mode
-
+# plt.ion()   # interactive mode
 # model = torch.nn.DataParallel(net, device_ids=[0]).cuda()
+
+
 def train(params):
 
     # future work variable
-    dataset             = params["dataset"]
-    input_height        = params["input_height"]
-    input_width         = params["input_width"]
+    dataset = params["dataset"]
+    input_height = params["input_height"]
+    input_width = params["input_width"]
 
-    data_path           = params["data_path"]
-    class_path          = params["class_path"]
-    batch_size          = params["batch_size"]
-    num_epochs          = params["num_epochs"]
-    learning_rate       = params["lr"]
-    dropout             = params["dropout"]
-    num_gpus            = [ i for i in range(params["num_gpus"])]
-    checkpoint_path     = params["checkpoint_path"]
+    data_path = params["data_path"]
+    class_path = params["class_path"]
+    batch_size = params["batch_size"]
+    num_epochs = params["num_epochs"]
+    learning_rate = params["lr"]
+    dropout = params["dropout"]
+    num_gpus = [i for i in range(params["num_gpus"])]
+    checkpoint_path = params["checkpoint_path"]
 
-    USE_VISDOM          = params["use_visdom"]
-    USE_SUMMARY         = params["use_summary"]
-    USE_AUGMENTATION    = params["use_augmentation"]
-    USE_GTCHECKER       = params["use_gtcheck"]
+    USE_VISDOM = params["use_visdom"]
+    USE_SUMMARY = params["use_summary"]
+    USE_AUGMENTATION = params["use_augmentation"]
+    USE_GTCHECKER = params["use_gtcheck"]
 
-    num_class           = params["num_class"]
+    num_class = params["num_class"]
 
     with open(class_path) as f:
         class_list = f.read().splitlines()
@@ -91,7 +92,7 @@ def train(params):
                                                collate_fn=detection_collate)
 
     # 5. Load YOLOv1
-    net = yolov1.YOLOv1(params={"dropout" : dropout, "num_class" : num_class})
+    net = yolov1.YOLOv1(params={"dropout": dropout, "num_class": num_class})
     model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
 
     if USE_SUMMARY:
@@ -113,7 +114,7 @@ def train(params):
 
         for i, (images, labels, sizes) in enumerate(train_loader):
 
-            current_train_step = (epoch) * total_step + (i+1)
+            current_train_step = (epoch) * total_step + (i + 1)
 
             if USE_GTCHECKER:
                 visualize_GT(images, labels, class_list)
@@ -121,7 +122,7 @@ def train(params):
 
             images = images.to(device)
             labels = labels.to(device)
-
+            
             # Forward pass
             outputs = model(images)
 
@@ -165,6 +166,7 @@ def train(params):
                                     'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
                                     'append')
+            
 
         if ((epoch % 1000) == 0) and (epoch != 0):
             save_checkpoint({
@@ -173,3 +175,4 @@ def train(params):
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
+        
