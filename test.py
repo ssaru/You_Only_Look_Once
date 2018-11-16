@@ -28,7 +28,7 @@ def test(params):
     with open(class_path) as f:
         class_list = f.read().splitlines()
 
-    objness_threshold = 0.5
+    objness_threshold = 0.15
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -73,12 +73,6 @@ def test(params):
 
         outputs = outputs.view(w, h, c)
         outputs_np = outputs.cpu().data.numpy()
-
-        print("ORIGIN OBJECTNESS")
-        print(outputs[:, :, 0])
-
-        print("\n\nORIGIN CLS PROB")
-        print(outputs[:, :, 5:])
 
         outputs[:, :, 0] = torch.sigmoid(outputs[:, :, 0])
         outputs[:, :, 5:] = torch.sigmoid(outputs[:, :, 5:])
