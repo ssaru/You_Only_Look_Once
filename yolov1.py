@@ -181,6 +181,8 @@ class YOLOv1(nn.Module):
         out = self.fc1(out)
         out = self.fc2(out)
         out = out.reshape((-1, 7, 7, ((10) + self.num_classes)))
+        out[:, :, :, 0] = torch.sigmoid(out[:, :, :, 0])  # sigmoid to objness1_output
+        out[:, :, :, 5:] = torch.sigmoid(out[:, :, :, 10:])  # sigmoid to class_output
 
         return out
 
@@ -224,23 +226,25 @@ def detection_loss_4_yolo(output, target):
 
     # label tensor slice
     objness_label = target[:, :, :, 0]
-    class_label = one_hot(class_output, target[:, :, :, 1])
-    x_offset_label = target[:, :, :, 2]
-    y_offset_label = target[:, :, :, 3]
-    width_ratio_label = target[:, :, :, 4]
-    height_ratio_label = target[:, :, :, 5]
+    x_offset_label = target[:, :, :, 1]
+    y_offset_label = target[:, :, :, 2]
+    width_ratio_label = target[:, :, :, 3]
+    height_ratio_label = target[:, :, :, 4]
+    class_label = one_hot(class_output, target[:, :, :, 5])
 
     noobjness_label = torch.neg(torch.add(objness_label, -1))
 
     obj_coord1_loss = lambda_coord * \
                       torch.sum(objness_label *
-                                (torch.pow(x_offset1_output - x_offset_label, 2) +
-                                 torch.pow(y_offset1_output - y_offset_label, 2)))
+                        (torch.pow(x_offset1_output - x_offset_label, 2) +
+                                    torch.pow(y_offset1_output - y_offset_label, 2)))
 
     obj_size1_loss = lambda_coord * \
                      torch.sum(objness_label *
                                (torch.pow(width_ratio1_output - torch.sqrt(width_ratio_label), 2) +
                                 torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
+
+    objectness_cls_map = torch.stack((objness_label, objness_label, objness_label, objness_label, objness_label), 3)
 
     obj_coord2_loss = lambda_coord * \
                       torch.sum(objness_label *
@@ -252,7 +256,6 @@ def detection_loss_4_yolo(output, target):
                                (torch.pow(width_ratio2_output - torch.sqrt(width_ratio_label), 2) +
                                 torch.pow(height_ratio2_output - torch.sqrt(height_ratio_label), 2)))
 
-    objectness_cls_map = torch.stack((objness_label, objness_label, objness_label, objness_label, objness_label), 3)
     obj_class_loss = torch.sum(objectness_cls_map * torch.pow(class_output - class_label, 2))
 
     noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness1_output - objness_label, 2))

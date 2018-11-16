@@ -89,7 +89,7 @@ def train(params):
     # 3. Load Dataset
     # composed
     # transforms.ToTensor
-    train_dataset = VOC(root=data_path, transform=transforms.ToTensor(), class_path=class_path)
+    train_dataset = VOC(root=data_path, transform=composed, class_path=class_path)
 
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=batch_size,
@@ -183,4 +183,5 @@ def train(params):
                 'epoch': epoch + 1,
                 'arch': "YOLOv1",
                 'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict()}, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
+                'optimizer': optimizer.state_dict(),
+            }, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
