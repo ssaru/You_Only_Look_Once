@@ -61,10 +61,10 @@ def train(params):
         noobjectness1_plot = create_vis_plot(viz, 'Iteration', 'noobjectness1', vis_title, vis_legend)
         objectness1_plot = create_vis_plot(viz, 'Iteration', 'objectness1', vis_title, vis_legend)
 
-        coord2_plot = create_vis_plot(viz, 'Iteration', 'coord1', vis_title, vis_legend)
-        size2_plot = create_vis_plot(viz, 'Iteration', 'size1', vis_title, vis_legend)
-        noobjectness2_plot = create_vis_plot(viz, 'Iteration', 'noobjectness1', vis_title, vis_legend)
-        objectness2_plot = create_vis_plot(viz, 'Iteration', 'objectness1', vis_title, vis_legend)
+        coord2_plot = create_vis_plot(viz, 'Iteration', 'coord2', vis_title, vis_legend)
+        size2_plot = create_vis_plot(viz, 'Iteration', 'size2', vis_title, vis_legend)
+        noobjectness2_plot = create_vis_plot(viz, 'Iteration', 'noobjectness2', vis_title, vis_legend)
+        objectness2_plot = create_vis_plot(viz, 'Iteration', 'objectness2', vis_title, vis_legend)
 
         obj_cls_plot = create_vis_plot(viz, 'Iteration', 'obj_cls', vis_title, vis_legend)
 
