@@ -26,7 +26,8 @@ warnings.filterwarnings("ignore")
 def train(params):
 
     wandb.init()
-
+    wandb.config.update(params) # adds all of the arguments as config variables
+    
     # future work variable
     dataset = params["dataset"]
     input_height = params["input_height"]
