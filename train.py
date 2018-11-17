@@ -3,8 +3,7 @@ import warnings
 
 import torch
 import torchvision.transforms as transforms
-import visdom
-
+import wandb
 import yolov1
 
 from torchsummary.torchsummary import summary
@@ -25,6 +24,8 @@ warnings.filterwarnings("ignore")
 
 
 def train(params):
+
+    wandb.init()
 
     # future work variable
     dataset = params["dataset"]
@@ -51,17 +52,6 @@ def train(params):
         class_list = f.read().splitlines()
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-    if USE_VISDOM:
-        viz = visdom.Visdom(use_incoming_socket=False)
-        vis_title = 'Yolo V1 Deepbaksu_vision (feat. martin, visionNoob) PyTorch on ' + 'VOC'
-        vis_legend = ['Train Loss']
-        iter_plot = create_vis_plot(viz, 'Iteration', 'Total Loss', vis_title, vis_legend)
-        coord1_plot = create_vis_plot(viz, 'Iteration', 'coord1', vis_title, vis_legend)
-        size1_plot = create_vis_plot(viz, 'Iteration', 'size1', vis_title, vis_legend)
-        noobjectness1_plot = create_vis_plot(viz, 'Iteration', 'noobjectness1', vis_title, vis_legend)
-        objectness1_plot = create_vis_plot(viz, 'Iteration', 'objectness1', vis_title, vis_legend)
-        obj_cls_plot = create_vis_plot(viz, 'Iteration', 'obj_cls', vis_title, vis_legend)
 
     # 2. Data augmentation setting
     if (USE_AUGMENTATION):
@@ -140,8 +130,7 @@ def train(params):
             optimizer.step()
 
             if (((current_train_step) % 100) == 0) or (current_train_step % 10 == 0 and current_train_step < 100):
-                print(
-                    'train steop [{}/{}], Epoch [{}/{}] ,Step [{}/{}] ,lr ,{} ,total_loss ,{:.4f} ,coord1 ,{} ,size1 ,{} ,noobj_clss ,{} ,objness1 ,{} ,'
+                print('train steop [{}/{}], Epoch [{}/{}] ,Step [{}/{}] ,lr ,{} ,total_loss ,{:.4f} ,coord1 ,{} ,size1 ,{} ,noobj_clss ,{} ,objness1 ,{} ,{}'
                     .format(current_train_step,
                             total_train_step,
                             epoch + 1,
@@ -157,16 +146,8 @@ def train(params):
                             objness1_loss
                             ))
 
-                if USE_VISDOM:
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), loss.item(), iter_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_coord1_loss, coord1_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_size1_loss, size1_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_class_loss, obj_cls_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None,
-                                    'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
-                                    'append')
-            
+                wandb.log({'total_loss': loss.item(), 'obj_coord1_loss':obj_coord1_loss, 'obj_size1_loss': obj_size1_loss, 'obj_class_loss': obj_class_loss, 'noobjness1_loss' : noobjness1_loss, 
+                            'objness1_loss' : objness1_loss})
 
         if ((epoch % 1000) == 0) and (epoch != 0):
             save_checkpoint({
