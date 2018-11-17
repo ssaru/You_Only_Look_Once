@@ -25,9 +25,6 @@ warnings.filterwarnings("ignore")
 
 def train(params):
 
-    wandb.init()
-    wandb.config.update(params) # adds all of the arguments as config variables
-    
     # future work variable
     dataset = params["dataset"]
     input_height = params["input_height"]
@@ -42,12 +39,16 @@ def train(params):
     num_gpus = [i for i in range(params["num_gpus"])]
     checkpoint_path = params["checkpoint_path"]
 
-    USE_VISDOM = params["use_visdom"]
+    USE_WANDB = params["use_wandb"]
     USE_SUMMARY = params["use_summary"]
     USE_AUGMENTATION = params["use_augmentation"]
     USE_GTCHECKER = params["use_gtcheck"]
 
     num_class = params["num_class"]
+
+    if (USE_WANDB):
+        wandb.init()
+        wandb.config.update(params) # adds all of the arguments as config variables
 
     with open(class_path) as f:
         class_list = f.read().splitlines()
@@ -146,8 +147,8 @@ def train(params):
                             noobjness1_loss,
                             objness1_loss
                             ))
-
-                wandb.log({'total_loss': loss.item(), 'obj_coord1_loss':obj_coord1_loss, 'obj_size1_loss': obj_size1_loss, 'obj_class_loss': obj_class_loss, 'noobjness1_loss' : noobjness1_loss, 
+                if (USE_WANDB):
+                    wandb.log({'total_loss': loss.item(), 'obj_coord1_loss':obj_coord1_loss, 'obj_size1_loss': obj_size1_loss, 'obj_class_loss': obj_class_loss, 'noobjness1_loss' : noobjness1_loss, 
                             'objness1_loss' : objness1_loss})
 
         if ((epoch % 1000) == 0) and (epoch != 0):

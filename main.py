@@ -18,7 +18,7 @@ parser.add_argument('--checkpoint_path', type=str, help='path to a specific chec
 
 # flag
 parser.add_argument('--use_augmentation', type=lambda x: (str(x).lower() == 'true'), help='Image Augmentation', default=True)
-parser.add_argument('--use_visdom', type=lambda x: (str(x).lower() == 'true'), help='visdom board', default=True)
+parser.add_argument('--use_wandb', type=lambda x: (str(x).lower() == 'true'), help='wandb', default=True)
 parser.add_argument('--use_summary', type=lambda x: (str(x).lower() == 'true'), help='descripte Model summary', default=True)
 parser.add_argument('--use_gtcheck', type=lambda x: (str(x).lower() == 'true'), help='Ground Truth check flag', default=False)
 
@@ -42,7 +42,7 @@ def main():
         "num_gpus": args.num_gpus,
         "checkpoint_path": args.checkpoint_path,
 
-        "use_visdom": args.use_visdom,
+        "use_wandb": args.use_wandb,
         "use_summary": args.use_summary,
         "use_augmentation": args.use_augmentation,
 
