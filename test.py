@@ -26,7 +26,7 @@ def test(params):
     with open(class_path) as f:
         class_list = f.read().splitlines()
 
-    objness_threshold = 0.5
+    objness_threshold = 0.7
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -72,20 +72,18 @@ def test(params):
         outputs = outputs.view(w, h, c)
         outputs_np = outputs.cpu().data.numpy()
 
-        print("ORIGIN OBJECTNESS")
+        print("OBJECTNESS 1 ")
         print(outputs[:, :, 0])
 
+        print("OBJECTNESS 2 ")
+        print(outputs[:, :, 5])
+
         print("\n\nORIGIN CLS PROB")
-        print(outputs[:, :, 5:])
+        print(outputs[:, :, 10:])
 
-        outputs[:, :, 0] = outputs[:, :, 0]
-        outputs[:, :, 5:] = outputs[:, :, 5:]
+        objness1 = outputs[:, :, 0].cpu().data.numpy()
+        objness2 = outputs[:, :, 5].cpu().data.numpy()
 
-        objness = outputs[:, :, 0].cpu().data.numpy()
-
-        print("OBJECTNESS : {}".format(objness.shape))
-        print(objness)
-        print("\n\n\n")
         print("IMAGE SIZE")
         print("width : {}, height : {}".format(W, H))
         print("\n\n\n\n")
@@ -96,11 +94,8 @@ def test(params):
                 for j in range(7):
                     draw.rectangle(((dx * i, dy * j), (dx * i + dx, dy * j + dy)), outline='#00ff88')
 
-                    if objness[i][j] >= objness_threshold:
+                    if objness1[i][j] >= objness_threshold:
                         block = outputs_np[i][j]
-
-                        x_start_point = dx * i
-                        y_start_point = dy * j
 
                         x_shift = block[1]
                         y_shift = block[2]
@@ -119,7 +114,7 @@ def test(params):
                         xmax = xmin + width
                         ymax = ymin + height
 
-                        clsprob = block[5:]
+                        clsprob = block[10:]
                         cls_idx = np.argmax(clsprob)
 
                         draw.rectangle(((xmin, ymin), (xmax, ymax)), outline="blue")
@@ -129,7 +124,49 @@ def test(params):
                                      fill='blue')
 
                         # LOG
-                        print("idx : [{}][{}]".format(i, j))
+                        print("OBJECTNESS 1")
+                        print("idx : [{}][{}] -> {}".format(i, j, objness2[i][j]))
+                        print("x shift : {}, y shift : {}".format(x_shift, y_shift))
+                        print("w ratio : {}, h ratio : {}".format(w_ratio, h_ratio))
+                        print("cls prob : {}".format(np.around(clsprob, decimals=2)))
+
+                        print("xmin : {}, ymin : {}, xmax : {}, ymax : {}".format(xmin, ymin, xmax, ymax))
+                        print("width : {} height : {}".format(width, height))
+                        print("class list : {}".format(class_list))
+                        print("\n\n\n")
+
+                    if objness2[i][j] >= objness_threshold:
+                        block = outputs_np[i][j]
+
+                        x_shift = block[6]
+                        y_shift = block[7]
+
+                        center_x = int((block[6] * W / 7.0) + (i * W / 7.0))
+                        center_y = int((block[7] * H / 7.0) + (j * H / 7.0))
+                        w_ratio = block[8]
+                        h_ratio = block[9]
+                        w_ratio = w_ratio * w_ratio
+                        h_ratio = h_ratio * h_ratio
+                        width = int(w_ratio * W)
+                        height = int(h_ratio * H)
+
+                        xmin = center_x - (width // 2)
+                        ymin = center_y - (height // 2)
+                        xmax = xmin + width
+                        ymax = ymin + height
+
+                        clsprob = block[10:]
+                        cls_idx = np.argmax(clsprob)
+
+                        draw.rectangle(((xmin, ymin), (xmax, ymax)), outline="red")
+                        draw.text((xmin, ymin), class_list[cls_idx])
+                        draw.ellipse(((center_x - 2, center_y - 2),
+                                      (center_x + 2, center_y + 2)),
+                                     fill='red')
+
+                        # LOG
+                        print("OBJECTNESS 2")
+                        print("idx : [{}][{}] -> {}".format(i, j, objness2[i][j]))
                         print("x shift : {}, y shift : {}".format(x_shift, y_shift))
                         print("w ratio : {}, h ratio : {}".format(w_ratio, h_ratio))
                         print("cls prob : {}".format(np.around(clsprob, decimals=2)))
