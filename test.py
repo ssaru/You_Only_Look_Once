@@ -26,7 +26,7 @@ def test(params):
     with open(class_path) as f:
         class_list = f.read().splitlines()
 
-    objness_threshold = 0.7
+    objness_threshold = 0.5
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -93,7 +93,7 @@ def test(params):
             for i in range(7):
                 for j in range(7):
                     draw.rectangle(((dx * i, dy * j), (dx * i + dx, dy * j + dy)), outline='#00ff88')
-
+                    """
                     if objness1[i][j] >= objness_threshold:
                         block = outputs_np[i][j]
 
@@ -134,7 +134,7 @@ def test(params):
                         print("width : {} height : {}".format(width, height))
                         print("class list : {}".format(class_list))
                         print("\n\n\n")
-
+                    """
                     if objness2[i][j] >= objness_threshold:
                         block = outputs_np[i][j]
 
