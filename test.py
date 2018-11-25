@@ -93,7 +93,7 @@ def test(params):
             for i in range(7):
                 for j in range(7):
                     draw.rectangle(((dx * i, dy * j), (dx * i + dx, dy * j + dy)), outline='#00ff88')
-                    """
+
                     if objness1[i][j] >= objness_threshold:
                         block = outputs_np[i][j]
 
@@ -117,7 +117,7 @@ def test(params):
                         clsprob = block[10:]
                         cls_idx = np.argmax(clsprob)
 
-                        draw.rectangle(((xmin, ymin), (xmax, ymax)), outline="blue")
+                        draw.rectangle(((xmin+1, ymin+1), (xmax+1, ymax+1)), outline="blue")
                         draw.text((xmin, ymin), class_list[cls_idx])
                         draw.ellipse(((center_x - 2, center_y - 2),
                                       (center_x + 2, center_y + 2)),
@@ -134,7 +134,7 @@ def test(params):
                         print("width : {} height : {}".format(width, height))
                         print("class list : {}".format(class_list))
                         print("\n\n\n")
-                    """
+
                     if objness2[i][j] >= objness_threshold:
                         block = outputs_np[i][j]
 
@@ -176,7 +176,7 @@ def test(params):
                         print("class list : {}".format(class_list))
                         print("\n\n\n")
 
-            plt.figure(figsize=(24, 18))
+            plt.figure(figsize=(15, 10))
             plt.imshow(img)
             plt.show()
             plt.close()
