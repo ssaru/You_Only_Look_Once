@@ -8,8 +8,6 @@ from torchvision import transforms
 from torchsummary.torchsummary import summary
 from PIL import Image, ImageDraw
 
-def sigmoid(x, derivative=False):
-    return x*(1-x) if derivative else 1/(1+np.exp(-x))
 
 def test(params):
 
@@ -73,6 +71,7 @@ def test(params):
 
         outputs = outputs.view(w, h, c)
         outputs_np = outputs.cpu().data.numpy()
+
 
         outputs[:, :, 0] = torch.sigmoid(outputs[:, :, 0])
         outputs[:, :, 5:] = torch.sigmoid(outputs[:, :, 5:])
