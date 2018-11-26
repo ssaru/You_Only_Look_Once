@@ -143,7 +143,7 @@ def train(params):
                 print(
                     'epoch: [{}/{}], total step: [{}/{}], batch step [{}/{}], lr: {}, total_loss: {:.4f}, coord1: {:.4f}, size1: {:.4f}, noobj_clss: {:.4f}, objness1: {:.4f}, class_loss: {:.4f}'
                     .format(epoch + 1, num_epochs, current_train_step, total_train_step, i + 1, total_step,
-                            [param_group['lr'] for param_group in optimizer.param_groups],
+                            ([param_group['lr'] for param_group in optimizer.param_groups])[0],
                             loss.item(), obj_coord1_loss, obj_size1_loss, noobjness1_loss, objness1_loss, obj_class_loss))
 
                 if USE_VISDOM:
