@@ -3,7 +3,9 @@ import warnings
 
 import torch
 import torchvision.transforms as transforms
+import visdom
 import wandb
+
 import yolov1
 
 from torchsummary.torchsummary import summary
