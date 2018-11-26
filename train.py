@@ -122,7 +122,7 @@ def train(params):
 
             images = images.to(device)
             labels = labels.to(device)
-            
+
             # Forward pass
             outputs = model(images)
 
@@ -166,7 +166,6 @@ def train(params):
                                     'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
                                     'append')
-            
 
         if ((epoch % 1000) == 0) and (epoch != 0):
             save_checkpoint({
@@ -174,5 +173,4 @@ def train(params):
                 'arch': "YOLOv1",
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-            }, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
-        
+            }, False, filename=os.path.join(checkpoint_path, 'cp-{{epoch_{:05d}}} {{losses_{:.04f}}} {{lr_{}}}.pth.tar'.format(epoch, loss.item(), ([param_group['lr'] for param_group in optimizer.param_groups])[0])))
