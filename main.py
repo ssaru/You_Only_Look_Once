@@ -18,8 +18,8 @@ parser.add_argument('--checkpoint_path', type=str, help='path to a specific chec
 
 # flag
 parser.add_argument('--use_augmentation', type=lambda x: (str(x).lower() == 'true'), help='Image Augmentation', default=True)
-parser.add_argument('--use_visdom', type=lambda x: (str(x).lower() == 'true'), help='visdom board', default=True)
-parser.add_argument('--use_wandb', type=lambda x: (str(x).lower() == 'true'), help='wandb', default=True)
+parser.add_argument('--use_visdom', type=lambda x: (str(x).lower() == 'true'), help='visdom board', default=False)
+parser.add_argument('--use_wandb', type=lambda x: (str(x).lower() == 'true'), help='wandb', default=False)
 parser.add_argument('--use_summary', type=lambda x: (str(x).lower() == 'true'), help='descripte Model summary', default=True)
 parser.add_argument('--use_gtcheck', type=lambda x: (str(x).lower() == 'true'), help='Ground Truth check flag', default=False)
 
