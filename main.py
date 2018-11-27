@@ -22,6 +22,7 @@ parser.add_argument('--use_augmentation', type=lambda x: (str(x).lower() == 'tru
 parser.add_argument('--use_visdom', type=lambda x: (str(x).lower() == 'true'), help='visdom board', default=True)
 parser.add_argument('--use_summary', type=lambda x: (str(x).lower() == 'true'), help='descripte Model summary', default=True)
 parser.add_argument('--use_gtcheck', type=lambda x: (str(x).lower() == 'true'), help='Ground Truth check flag', default=False)
+parser.add_argument('--use_githash', type=lambda x: (str(x).lower() == 'true'), help='use githash to checkpoint', default=False)
 
 # develop
 parser.add_argument('--num_class', type=int, help='number of class', default=5, required=True)
