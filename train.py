@@ -46,6 +46,7 @@ def train(params):
     USE_AUGMENTATION = params["use_augmentation"]
     USE_GTCHECKER = params["use_gtcheck"]
 
+    USE_GITHASH = params["use_githash"]
     num_class = params["num_class"]
 
     with open(class_path) as f:
