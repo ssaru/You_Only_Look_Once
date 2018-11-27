@@ -14,14 +14,14 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 def augmentImage(image, normed_lxywhs, image_width, image_height, seq):
 
     bbs = GetImgaugStyleBBoxes(normed_lxywhs, image_width, image_height)
-    
+
     seq_det = seq.to_deterministic()
 
     image_aug = seq_det.augment_images([image])[0]
 
     bbs_aug = seq_det.augment_bounding_boxes([bbs])[0]
 
-    bbs_aug = clippingBBox(bbs_aug, image_width, image_height)
+    bbs_aug = bbs_aug.remove_out_of_image().cut_out_of_image()
 
     if(False):
         image_before = bbs.draw_on_image(image, thickness=5)
@@ -33,7 +33,7 @@ def augmentImage(image, normed_lxywhs, image_width, image_height, seq):
                  axes_pad=0.1,  # pad between axes in inch.
                  )
 
-    normed_bbs_aug = GetYoloStyleBBoxes(normed_lxywhs, bbs_aug, image_width, image_height)    
+    normed_bbs_aug = GetYoloStyleBBoxes(normed_lxywhs, bbs_aug, image_width, image_height)
 
     return image_aug, normed_bbs_aug
 
