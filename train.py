@@ -81,6 +81,11 @@ def train(params):
     else:
         seq = iaa.Sequential([])
 
+    if (USE_GITHASH):
+        repo = git.Repo(search_parent_directories=True)
+        sha = repo.head.object.hexsha
+        short_sha = repo.git.rev_parse(sha, short=7)
+
     composed = transforms.Compose([Augmenter(seq)])
 
     # 3. Load Dataset
