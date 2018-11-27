@@ -27,6 +27,7 @@ def one_hot(output, label):
 
     return result
 
+
 # visdom function
 def create_vis_plot(viz, _xlabel, _ylabel, _title, _legend):
     return viz.line(
@@ -184,20 +185,3 @@ def visualize_GT(images, labels, cls_list):
         plt.imshow(img)
         plt.show()
         plt.close()
-
-
-def clippingBBox(bbs_aug, image_width, image_height):
-    clipedBBoxes = ia.BoundingBoxesOnImage([], shape=(image_width, image_height))
-    for i in range(len(bbs_aug.bounding_boxes)):
-        curBox = bbs_aug.bounding_boxes[i]
-
-        x1 = np.minimum(np.maximum(curBox.x1, 0), image_width - 1)
-        x2 = np.minimum(np.maximum(curBox.x2, 0), image_width - 1)
-        y1 = np.minimum(np.maximum(curBox.y1, 0), image_height - 1)
-        y2 = np.minimum(np.maximum(curBox.y2, 0), image_height - 1)
-
-        # augmentation 이후 화면을 완전히 벗어난 객체가 존재하므로 뺴줘야함
-        if(x2 > x1 and y2 > y1):
-            clipedBBoxes.bounding_boxes.append(ia.BoundingBox(x1=x1, x2=x2, y1=y1, y2=y2, label='None'))
-
-    return clipedBBoxes
