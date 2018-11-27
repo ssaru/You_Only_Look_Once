@@ -1,5 +1,5 @@
 import argparse
-import git
+
 from train import train
 from test import test
 
