@@ -54,6 +54,11 @@ def train(params):
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+    if (USE_GITHASH):
+        repo = git.Repo(search_parent_directories=True)
+        sha = repo.head.object.hexsha
+        short_sha = repo.git.rev_parse(sha, short=7)
+
     if USE_VISDOM:
         viz = visdom.Visdom(use_incoming_socket=False)
         vis_title = 'Yolo V1 Deepbaksu_vision (feat. martin, visionNoob) PyTorch on ' + 'VOC'
@@ -80,11 +85,6 @@ def train(params):
         ])
     else:
         seq = iaa.Sequential([])
-
-    if (USE_GITHASH):
-        repo = git.Repo(search_parent_directories=True)
-        sha = repo.head.object.hexsha
-        short_sha = repo.git.rev_parse(sha, short=7)
 
     composed = transforms.Compose([Augmenter(seq)])
 
