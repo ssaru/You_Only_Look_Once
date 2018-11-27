@@ -122,7 +122,7 @@ def train(params):
 
             images = images.to(device)
             labels = labels.to(device)
-            
+
             # Forward pass
             outputs = model(images)
 
@@ -141,21 +141,10 @@ def train(params):
 
             if (((current_train_step) % 100) == 0) or (current_train_step % 10 == 0 and current_train_step < 100):
                 print(
-                    'train steop [{}/{}], Epoch [{}/{}] ,Step [{}/{}] ,lr ,{} ,total_loss ,{:.4f} ,coord1 ,{} ,size1 ,{} ,noobj_clss ,{} ,objness1 ,{} ,'
-                    .format(current_train_step,
-                            total_train_step,
-                            epoch + 1,
-                            num_epochs,
-                            i + 1,
-                            total_step,
-                            [param_group['lr'] for param_group in optimizer.param_groups],
-                            loss.item(),
-                            obj_coord1_loss,
-                            obj_size1_loss,
-                            obj_class_loss,
-                            noobjness1_loss,
-                            objness1_loss
-                            ))
+                    'epoch: [{}/{}], total step: [{}/{}], batch step [{}/{}], lr: {}, total_loss: {:.4f}, coord1: {:.4f}, size1: {:.4f}, noobj_clss: {:.4f}, objness1: {:.4f}, class_loss: {:.4f}'
+                    .format(epoch + 1, num_epochs, current_train_step, total_train_step, i + 1, total_step,
+                            ([param_group['lr'] for param_group in optimizer.param_groups])[0],
+                            loss.item(), obj_coord1_loss, obj_size1_loss, noobjness1_loss, objness1_loss, obj_class_loss))
 
                 if USE_VISDOM:
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), loss.item(), iter_plot, None, 'append')
@@ -166,7 +155,6 @@ def train(params):
                                     'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
                                     'append')
-            
 
         if ((epoch % 1000) == 0) and (epoch != 0):
             save_checkpoint({
@@ -175,4 +163,3 @@ def train(params):
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
-        
