@@ -49,8 +49,8 @@ def main():
         "use_augmentation": args.use_augmentation,
 
         "num_class": args.num_class,
-        "use_gtcheck": args.use_gtcheck
-
+        "use_gtcheck": args.use_gtcheck,
+        "use_githash": args.use_githash
     }
 
     if params["mode"] == "train":
