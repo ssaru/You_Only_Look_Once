@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import git
 import torch
 import torchvision.transforms as transforms
 import visdom
