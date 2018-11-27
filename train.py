@@ -174,10 +174,13 @@ def train(params):
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
                                     'append')
 
-        if ((epoch % 1000) == 0) and (epoch != 0):
+        if not USE_GITHASH:
+            short_sha = 'no_hash'
+
+        if ((epoch % 1) == 0) and (epoch != 0):
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': "YOLOv1",
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-            }, False, filename=os.path.join(checkpoint_path, 'cp-{{epoch_{:05d}}} {{losses_{:.04f}}} {{lr_{}}}.pth.tar'.format(epoch, loss.item(), ([param_group['lr'] for param_group in optimizer.param_groups])[0])))
+            }, False, filename=os.path.join(checkpoint_path, 'cp({})-epoch_{:05d},losses_{:.04f},lr_{}.pth.tar'.format(short_sha, epoch, loss.item(), ([param_group['lr'] for param_group in optimizer.param_groups])[0])))
