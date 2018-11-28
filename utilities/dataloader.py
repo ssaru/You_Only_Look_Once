@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+
 def detection_collate(batch):
     """ `Puts each data field into a tensor with outer dimension batch size`
 
@@ -60,11 +61,11 @@ def detection_collate(batch):
             # [objectness, class, x offset, y offset, width ratio, height ratio]
             np_label[grid_x_index][grid_y_index] = np.array([objectness, cls, x_offset, y_offset, w_ratio, h_ratio])
 
-
         label = torch.from_numpy(np_label)
         targets.append(label)
 
     return torch.stack(imgs, 0), torch.stack(targets, 0), sizes
+
 
 class VOC(data.Dataset):
     """ `VOC PASCAL Object Detection Challenge <http://host.robots.ox.ac.uk/pascal/VOC/voc2012/>_ Dataset `
@@ -116,12 +117,12 @@ class VOC(data.Dataset):
         voc = cvtVOC()
 
         yolo = cvtYOLO(os.path.abspath(self.class_path))
-        flag, self.dict_data =voc.parse(os.path.join(self.root, self.LABEL_FOLDER))
+        flag, self.dict_data = voc.parse(os.path.join(self.root, self.LABEL_FOLDER))
 
         try:
 
             if flag:
-                flag, data =yolo.generate(self.dict_data)
+                flag, data = yolo.generate(self.dict_data)
 
                 keys = list(data.keys())
                 keys = sorted(keys, key=lambda key: int(key.split("_")[-1]))
@@ -136,17 +137,15 @@ class VOC(data.Dataset):
                             tmp[j] = float(tmp[j])
                         target.append(tmp)
 
-                    result.append({os.path.join(self.root, self.IMAGE_FOLDER, "".join([key, self.IMG_EXTENSIONS])) : target})
+                    result.append({os.path.join(self.root, self.IMAGE_FOLDER, "".join([key, self.IMG_EXTENSIONS])): target})
 
                 return result
 
         except Exception as e:
             raise RuntimeError("Error : {}".format(e))
 
-
     def __len__(self):
         return len(self.data)
-
 
     def __getitem__(self, index):
         """
@@ -165,7 +164,6 @@ class VOC(data.Dataset):
             ]
 
         """
-
         key = list(self.data[index].keys())[0]
 
         img = Image.open(key).convert('RGB')
