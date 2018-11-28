@@ -4,6 +4,7 @@ import warnings
 import torch
 import torchvision.transforms as transforms
 import visdom
+import wandb
 
 import yolov1
 
@@ -41,11 +42,16 @@ def train(params):
     checkpoint_path = params["checkpoint_path"]
 
     USE_VISDOM = params["use_visdom"]
+    USE_WANDB = params["use_wandb"]
     USE_SUMMARY = params["use_summary"]
     USE_AUGMENTATION = params["use_augmentation"]
     USE_GTCHECKER = params["use_gtcheck"]
 
     num_class = params["num_class"]
+
+    if (USE_WANDB):
+        wandb.init()
+        wandb.config.update(params)  # adds all of the arguments as config variables
 
     with open(class_path) as f:
         class_list = f.read().splitlines()
@@ -151,12 +157,18 @@ def train(params):
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_coord1_loss, coord1_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_size1_loss, size1_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_class_loss, obj_cls_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None,
-                                    'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
-                                    'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None, 'append')
 
-        if ((epoch % 1000) == 0) and (epoch != 0):
+                if USE_WANDB:
+                    wandb.log({'total_loss': loss.item(),
+                               'obj_coord1_loss': obj_coord1_loss,
+                               'obj_size1_loss': obj_size1_loss,
+                               'obj_class_loss': obj_class_loss,
+                               'noobjness1_loss': noobjness1_loss,
+                               'objness1_loss': objness1_loss})
+
+          if ((epoch % 1000) == 0) and (epoch != 0):
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': "YOLOv1",
