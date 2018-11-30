@@ -4,6 +4,7 @@ import warnings
 import torch
 import torchvision.transforms as transforms
 import visdom
+import wandb
 
 import yolov1
 
@@ -20,31 +21,37 @@ from yolov1 import detection_loss_4_yolo
 from imgaug import augmenters as iaa
 
 warnings.filterwarnings("ignore")
-#plt.ion()   # interactive mode
-
+# plt.ion()   # interactive mode
 # model = torch.nn.DataParallel(net, device_ids=[0]).cuda()
+
+
 def train(params):
 
     # future work variable
-    dataset             = params["dataset"]
-    input_height        = params["input_height"]
-    input_width         = params["input_width"]
+    dataset = params["dataset"]
+    input_height = params["input_height"]
+    input_width = params["input_width"]
 
-    data_path           = params["data_path"]
-    class_path          = params["class_path"]
-    batch_size          = params["batch_size"]
-    num_epochs          = params["num_epochs"]
-    learning_rate       = params["lr"]
-    dropout             = params["dropout"]
-    num_gpus            = [ i for i in range(params["num_gpus"])]
-    checkpoint_path     = params["checkpoint_path"]
+    data_path = params["data_path"]
+    class_path = params["class_path"]
+    batch_size = params["batch_size"]
+    num_epochs = params["num_epochs"]
+    learning_rate = params["lr"]
+    dropout = params["dropout"]
+    num_gpus = [i for i in range(params["num_gpus"])]
+    checkpoint_path = params["checkpoint_path"]
 
-    USE_VISDOM          = params["use_visdom"]
-    USE_SUMMARY         = params["use_summary"]
-    USE_AUGMENTATION    = params["use_augmentation"]
-    USE_GTCHECKER       = params["use_gtcheck"]
+    USE_VISDOM = params["use_visdom"]
+    USE_WANDB = params["use_wandb"]
+    USE_SUMMARY = params["use_summary"]
+    USE_AUGMENTATION = params["use_augmentation"]
+    USE_GTCHECKER = params["use_gtcheck"]
 
-    num_class           = params["num_class"]
+    num_class = params["num_class"]
+
+    if (USE_WANDB):
+        wandb.init()
+        wandb.config.update(params)  # adds all of the arguments as config variables
 
     with open(class_path) as f:
         class_list = f.read().splitlines()
@@ -83,7 +90,7 @@ def train(params):
     # 3. Load Dataset
     # composed
     # transforms.ToTensor
-    train_dataset = VOC(root=data_path, transform=transforms.ToTensor(), class_path=class_path)
+    train_dataset = VOC(root=data_path, transform=composed, class_path=class_path)
 
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=batch_size,
@@ -91,7 +98,7 @@ def train(params):
                                                collate_fn=detection_collate)
 
     # 5. Load YOLOv1
-    net = yolov1.YOLOv1(params={"dropout" : dropout, "num_class" : num_class})
+    net = yolov1.YOLOv1(params={"dropout": dropout, "num_class": num_class})
     model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
 
     if USE_SUMMARY:
@@ -113,7 +120,7 @@ def train(params):
 
         for i, (images, labels, sizes) in enumerate(train_loader):
 
-            current_train_step = (epoch) * total_step + (i+1)
+            current_train_step = (epoch) * total_step + (i + 1)
 
             if USE_GTCHECKER:
                 visualize_GT(images, labels, class_list)
@@ -140,33 +147,28 @@ def train(params):
 
             if (((current_train_step) % 100) == 0) or (current_train_step % 10 == 0 and current_train_step < 100):
                 print(
-                    'train steop [{}/{}], Epoch [{}/{}] ,Step [{}/{}] ,lr ,{} ,total_loss ,{:.4f} ,coord1 ,{} ,size1 ,{} ,noobj_clss ,{} ,objness1 ,{} ,'
-                    .format(current_train_step,
-                            total_train_step,
-                            epoch + 1,
-                            num_epochs,
-                            i + 1,
-                            total_step,
-                            [param_group['lr'] for param_group in optimizer.param_groups],
-                            loss.item(),
-                            obj_coord1_loss,
-                            obj_size1_loss,
-                            obj_class_loss,
-                            noobjness1_loss,
-                            objness1_loss
-                            ))
+                    'epoch: [{}/{}], total step: [{}/{}], batch step [{}/{}], lr: {}, total_loss: {:.4f}, coord1: {:.4f}, size1: {:.4f}, noobj_clss: {:.4f}, objness1: {:.4f}, class_loss: {:.4f}'
+                    .format(epoch + 1, num_epochs, current_train_step, total_train_step, i + 1, total_step,
+                            ([param_group['lr'] for param_group in optimizer.param_groups])[0],
+                            loss.item(), obj_coord1_loss, obj_size1_loss, noobjness1_loss, objness1_loss, obj_class_loss))
 
                 if USE_VISDOM:
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), loss.item(), iter_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_coord1_loss, coord1_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_size1_loss, size1_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_class_loss, obj_cls_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None,
-                                    'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
-                                    'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None, 'append')
 
-        if ((epoch % 1000) == 0) and (epoch != 0):
+                if USE_WANDB:
+                    wandb.log({'total_loss': loss.item(),
+                               'obj_coord1_loss': obj_coord1_loss,
+                               'obj_size1_loss': obj_size1_loss,
+                               'obj_class_loss': obj_class_loss,
+                               'noobjness1_loss': noobjness1_loss,
+                               'objness1_loss': objness1_loss})
+
+          if ((epoch % 1000) == 0) and (epoch != 0):
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': "YOLOv1",
