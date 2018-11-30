@@ -199,14 +199,7 @@ def detection_loss_4_yolo(output, target):
     b, _, _, _ = target.shape
     _, _, _, n = output.shape
 
-    # calc number of class
-    num_of_cls = n - 5
-
-    # class loss
-    MSE_criterion = nn.MSELoss()
-
     # output tensor slice
-
     # output tensor shape is [batch, 7, 7, 5 + classes]
     objness1_output = output[:, :, :, 0]
     x_offset1_output = output[:, :, :, 1]
@@ -214,6 +207,8 @@ def detection_loss_4_yolo(output, target):
     width_ratio1_output = output[:, :, :, 3]
     height_ratio1_output = output[:, :, :, 4]
     class_output = output[:, :, :, 5:]
+
+    num_cls = class_output.shape[-1]
 
     # label tensor slice
     objness_label = target[:, :, :, 0]
@@ -235,10 +230,15 @@ def detection_loss_4_yolo(output, target):
                                (torch.pow(width_ratio1_output - torch.sqrt(width_ratio_label), 2) +
                                 torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
 
-    objectness_cls_map = torch.stack((objness_label, objness_label, objness_label, objness_label, objness_label), 3)
-    objness1_loss = torch.sum(objness_label * torch.pow(objness1_output - objness_label, 2))
-    noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness1_output - objness_label, 2))
+    objectness_cls_map = objness_label.unsqueeze(-1)
+
+    for i in range(num_cls - 1):
+        objectness_cls_map = torch.cat((objectness_cls_map, objness_label.unsqueeze(-1)), 3)
+
     obj_class_loss = torch.sum(objectness_cls_map * torch.pow(class_output - class_label, 2))
+
+    noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness1_output - objness_label, 2))
+    objness1_loss = torch.sum(objness_label * torch.pow(objness1_output - objness_label, 2))
 
     total_loss = (obj_coord1_loss + obj_size1_loss + noobjness1_loss + objness1_loss + obj_class_loss)
     total_loss = total_loss / b

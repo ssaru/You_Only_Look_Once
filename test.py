@@ -83,7 +83,7 @@ def test(params):
         print("\n\n\n")
         print("IMAGE SIZE")
         print("width : {}, height : {}".format(W, H))
-        print("\n\n\n")
+        print("\n\n\n\n")
 
         try:
 
@@ -104,6 +104,7 @@ def test(params):
                         center_y = int((block[2] * H / 7.0) + (j * H / 7.0))
                         w_ratio = block[3]
                         h_ratio = block[4]
+
                         w_ratio = w_ratio * w_ratio
                         h_ratio = h_ratio * h_ratio
                         width = int(w_ratio * W)
