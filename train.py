@@ -167,11 +167,10 @@ def train(params):
                                'obj_class_loss': obj_class_loss,
                                'noobjness1_loss': noobjness1_loss,
                                'objness1_loss': objness1_loss})
-
-          if ((epoch % 1000) == 0) and (epoch != 0):
-            save_checkpoint({
-                'epoch': epoch + 1,
-                'arch': "YOLOv1",
-                'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-            }, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
+            if ((epoch % 1000) == 0) and (epoch != 0):
+                save_checkpoint({
+                    'epoch': epoch + 1,
+                    'arch': "YOLOv1",
+                    'state_dict': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                }, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
