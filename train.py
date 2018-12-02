@@ -175,7 +175,7 @@ def train(params):
                                     'append')
 
         if not USE_GITHASH:
-            short_sha = 'no_hash'
+            short_sha = 'noHash'
 
         if ((epoch % 1) == 0) and (epoch != 0):
             save_checkpoint({
@@ -183,4 +183,4 @@ def train(params):
                 'arch': "YOLOv1",
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-            }, False, filename=os.path.join(checkpoint_path, 'cp({})-epoch_{:05d},losses_{:.04f},lr_{}.pth.tar'.format(short_sha, epoch, loss.item(), ([param_group['lr'] for param_group in optimizer.param_groups])[0])))
+            }, False, filename=os.path.join(checkpoint_path, 'ckpt_{}_ep{:05d}_loss{:.04f}_lr{}.pth.tar'.format(short_sha, epoch, loss.item(), ([param_group['lr'] for param_group in optimizer.param_groups])[0])))
