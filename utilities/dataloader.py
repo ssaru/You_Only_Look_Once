@@ -166,7 +166,6 @@ class VOC(data.Dataset):
             ]
 
         """
-
         key = list(self.data[index].keys())[0]
 
         img = Image.open(key).convert('RGB')

@@ -5,6 +5,7 @@ import git
 import torch
 import torchvision.transforms as transforms
 import visdom
+import wandb
 
 import yolov1
 
@@ -42,12 +43,17 @@ def train(params):
     checkpoint_path = params["checkpoint_path"]
 
     USE_VISDOM = params["use_visdom"]
+    USE_WANDB = params["use_wandb"]
     USE_SUMMARY = params["use_summary"]
     USE_AUGMENTATION = params["use_augmentation"]
     USE_GTCHECKER = params["use_gtcheck"]
 
     USE_GITHASH = params["use_githash"]
     num_class = params["num_class"]
+
+    if (USE_WANDB):
+        wandb.init()
+        wandb.config.update(params)  # adds all of the arguments as config variables
 
     with open(class_path) as f:
         class_list = f.read().splitlines()
@@ -148,39 +154,35 @@ def train(params):
 
             if (((current_train_step) % 100) == 0) or (current_train_step % 10 == 0 and current_train_step < 100):
                 print(
-                    'train steop [{}/{}], Epoch [{}/{}] ,Step [{}/{}] ,lr ,{} ,total_loss ,{:.4f} ,coord1 ,{} ,size1 ,{} ,noobj_clss ,{} ,objness1 ,{} ,'
-                    .format(current_train_step,
-                            total_train_step,
-                            epoch + 1,
-                            num_epochs,
-                            i + 1,
-                            total_step,
-                            [param_group['lr'] for param_group in optimizer.param_groups],
-                            loss.item(),
-                            obj_coord1_loss,
-                            obj_size1_loss,
-                            obj_class_loss,
-                            noobjness1_loss,
-                            objness1_loss
-                            ))
+                    'epoch: [{}/{}], total step: [{}/{}], batch step [{}/{}], lr: {}, total_loss: {:.4f}, coord1: {:.4f}, size1: {:.4f}, noobj_clss: {:.4f}, objness1: {:.4f}, class_loss: {:.4f}'
+                    .format(epoch + 1, num_epochs, current_train_step, total_train_step, i + 1, total_step,
+                            ([param_group['lr'] for param_group in optimizer.param_groups])[0],
+                            loss.item(), obj_coord1_loss, obj_size1_loss, noobjness1_loss, objness1_loss, obj_class_loss))
 
                 if USE_VISDOM:
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), loss.item(), iter_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_coord1_loss, coord1_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_size1_loss, size1_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_class_loss, obj_cls_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None,
-                                    'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None,
-                                    'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None, 'append')
+
+                 if USE_WANDB:
+                    wandb.log({'total_loss': loss.item(),
+                               'obj_coord1_loss': obj_coord1_loss,
+                               'obj_size1_loss': obj_size1_loss,
+                               'obj_class_loss': obj_class_loss,
+                               'noobjness1_loss': noobjness1_loss,
+                               'objness1_loss': objness1_loss})
 
         if not USE_GITHASH:
             short_sha = 'noHash'
 
-        if ((epoch % 1) == 0) and (epoch != 0):
+        if ((epoch % 1000) == 0) and (epoch != 0):
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': "YOLOv1",
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, False, filename=os.path.join(checkpoint_path, 'ckpt_{}_ep{:05d}_loss{:.04f}_lr{}.pth.tar'.format(short_sha, epoch, loss.item(), ([param_group['lr'] for param_group in optimizer.param_groups])[0])))
+
