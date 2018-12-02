@@ -1,4 +1,5 @@
 import argparse
+
 from train import train
 from test import test
 
@@ -22,6 +23,7 @@ parser.add_argument('--use_visdom', type=lambda x: (str(x).lower() == 'true'), h
 parser.add_argument('--use_wandb', type=lambda x: (str(x).lower() == 'true'), help='wandb', default=False)
 parser.add_argument('--use_summary', type=lambda x: (str(x).lower() == 'true'), help='descripte Model summary', default=True)
 parser.add_argument('--use_gtcheck', type=lambda x: (str(x).lower() == 'true'), help='Ground Truth check flag', default=False)
+parser.add_argument('--use_githash', type=lambda x: (str(x).lower() == 'true'), help='use githash to checkpoint', default=False)
 
 # develop
 parser.add_argument('--num_class', type=int, help='number of class', default=5, required=True)
@@ -49,8 +51,8 @@ def main():
         "use_augmentation": args.use_augmentation,
 
         "num_class": args.num_class,
-        "use_gtcheck": args.use_gtcheck
-
+        "use_gtcheck": args.use_gtcheck,
+        "use_githash": args.use_githash
     }
 
     if params["mode"] == "train":
