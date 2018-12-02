@@ -182,4 +182,4 @@ class VOC(data.Dataset):
             # Future works
             pass
 
-        return img, target, current_shape
+        return img, aug_target, current_shape
