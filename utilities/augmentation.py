@@ -3,7 +3,6 @@ from utilities.utils import CvtCoordsXXYY2XYWH
 from utilities.utils import CvtCoordsXYWH2XXYY
 from utilities.utils import GetImgaugStyleBBoxes
 from utilities.utils import GetYoloStyleBBoxes
-from utilities.utils import clippingBBox
 import imgaug as ia
 from imgaug import augmenters as iaa
 from PIL import Image
