@@ -167,13 +167,9 @@ def train(params):
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None, 'append')
 
-                 if USE_WANDB:
-                    wandb.log({'total_loss': loss.item(),
-                               'obj_coord1_loss': obj_coord1_loss,
-                               'obj_size1_loss': obj_size1_loss,
-                               'obj_class_loss': obj_class_loss,
-                               'noobjness1_loss': noobjness1_loss,
-                               'objness1_loss': objness1_loss})
+                if USE_WANDB:
+                    wandb.log({'total_loss': loss.item(), 'obj_coord1_loss': obj_coord1_loss, 'obj_size1_loss': obj_size1_loss,
+                            'obj_class_loss': obj_class_loss, 'noobjness1_loss': noobjness1_loss, 'objness1_loss': objness1_loss})
 
         if not USE_GITHASH:
             short_sha = 'noHash'
@@ -185,4 +181,3 @@ def train(params):
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, False, filename=os.path.join(checkpoint_path, 'ckpt_{}_ep{:05d}_loss{:.04f}_lr{}.pth.tar'.format(short_sha, epoch, loss.item(), ([param_group['lr'] for param_group in optimizer.param_groups])[0])))
-
