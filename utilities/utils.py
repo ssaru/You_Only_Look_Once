@@ -153,11 +153,11 @@ def visualize_GT(images, labels, cls_list):
             draw.line(line, fill="red")
 
         obj_coord = label[:, :, 0]
-        cls = label[:, :, 1]
-        x_shift = label[:, :, 2]
-        y_shift = label[:, :, 3]
-        w_ratio = label[:, :, 4]
-        h_ratio = label[:, :, 5]
+        x_shift = label[:, :, 1]
+        y_shift = label[:, :, 2]
+        w_ratio = label[:, :, 3]
+        h_ratio = label[:, :, 4]
+        cls = label[:, :, 5]
 
         for i in range(7):
             for j in range(7):
