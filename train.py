@@ -106,7 +106,14 @@ def train(params):
 
     # 5. Load YOLOv1
     net = yolov1.YOLOv1(params={"dropout": dropout, "num_class": num_class})
-    model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
+    # model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
+
+    print("device : ", device)
+    if device.type == 'cpu':
+        model = torch.nn.DataParallel(net)
+    else:
+        model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
+
 
     if USE_SUMMARY:
         summary(model, (3, 448, 448))
@@ -146,7 +153,8 @@ def train(params):
             obj_size1_loss, \
             obj_class_loss, \
             noobjness1_loss, \
-            objness1_loss = detection_loss_4_yolo(outputs, labels)
+            objness1_loss = detection_loss_4_yolo(outputs, labels, device.type)
+            # objness1_loss = detection_loss_4_yolo(outputs, labels)
 
             # Backward and optimize
             optimizer.zero_grad()

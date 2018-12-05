@@ -187,7 +187,8 @@ class YOLOv1(nn.Module):
         return out
 
 
-def detection_loss_4_yolo(output, target):
+# def detection_loss_4_yolo(output, target):
+def detection_loss_4_yolo(output, target, device):
     from utilities.utils import one_hot
 
     # hyper parameter
@@ -216,7 +217,7 @@ def detection_loss_4_yolo(output, target):
     y_offset_label = target[:, :, :, 2]
     width_ratio_label = target[:, :, :, 3]
     height_ratio_label = target[:, :, :, 4]
-    class_label = one_hot(class_output, target[:, :, :, 5])
+    class_label = one_hot(class_output, target[:, :, :, 5], device)
 
     noobjness_label = torch.neg(torch.add(objness_label, -1))
 

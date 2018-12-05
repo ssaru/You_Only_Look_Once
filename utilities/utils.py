@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw
 num_classes = 1
 
 
-def one_hot(output, label):
+def one_hot(output, label, device):
 
     label = label.cpu().data.numpy()
     b, s1, s2, c = output.shape
@@ -23,7 +23,10 @@ def one_hot(output, label):
                 dst[k][i][j][int(label[k][i][j])] = 1.
 
     result = torch.from_numpy(dst)
-    result = result.type(torch.FloatTensor).cuda()
+    if device == 'cpu':
+        result = result.type(torch.FloatTensor)
+    else:
+        result = result.type(torch.FloatTensor).cuda()
 
     return result
 
