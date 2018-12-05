@@ -31,7 +31,13 @@ def test(params):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     net = yolov1.YOLOv1(params={"dropout": 1.0, "num_class": num_class})
-    model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
+    # model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
+    print("device : ", device)
+    if device is "cpu":
+        model = torch.nn.DataParallel(net)
+    else:
+        model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
+
     model.load_state_dict(torch.load(checkpoint_path)["state_dict"])
     model.eval()
 
