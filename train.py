@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import git
 import torch
 import torchvision.transforms as transforms
 import visdom
@@ -47,6 +48,7 @@ def train(params):
     USE_AUGMENTATION = params["use_augmentation"]
     USE_GTCHECKER = params["use_gtcheck"]
 
+    USE_GITHASH = params["use_githash"]
     num_class = params["num_class"]
 
     if (USE_WANDB):
@@ -57,6 +59,11 @@ def train(params):
         class_list = f.read().splitlines()
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+    if (USE_GITHASH):
+        repo = git.Repo(search_parent_directories=True)
+        sha = repo.head.object.hexsha
+        short_sha = repo.git.rev_parse(sha, short=7)
 
     if USE_VISDOM:
         viz = visdom.Visdom(use_incoming_socket=False)
@@ -99,7 +106,14 @@ def train(params):
 
     # 5. Load YOLOv1
     net = yolov1.YOLOv1(params={"dropout": dropout, "num_class": num_class})
-    model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
+    # model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
+
+    print("device : ", device)
+    if device.type == 'cpu':
+        model = torch.nn.DataParallel(net)
+    else:
+        model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
+
 
     if USE_SUMMARY:
         summary(model, (3, 448, 448))
@@ -113,7 +127,8 @@ def train(params):
 
     total_train_step = num_epochs * total_step
 
-    for epoch in range(num_epochs):
+    # for epoch in range(num_epochs):
+    for epoch in range(1, num_epochs+1):
 
         if (epoch == 200) or (epoch == 400) or (epoch == 600) or (epoch == 20000) or (epoch == 30000):
             scheduler.step()
@@ -137,7 +152,8 @@ def train(params):
             obj_size1_loss, \
             obj_class_loss, \
             noobjness1_loss, \
-            objness1_loss = detection_loss_4_yolo(outputs, labels)
+            objness1_loss = detection_loss_4_yolo(outputs, labels, device.type)
+            # objness1_loss = detection_loss_4_yolo(outputs, labels)
 
             # Backward and optimize
             optimizer.zero_grad()
@@ -160,16 +176,18 @@ def train(params):
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None, 'append')
 
                 if USE_WANDB:
-                    wandb.log({'total_loss': loss.item(),
-                               'obj_coord1_loss': obj_coord1_loss,
-                               'obj_size1_loss': obj_size1_loss,
-                               'obj_class_loss': obj_class_loss,
-                               'noobjness1_loss': noobjness1_loss,
-                               'objness1_loss': objness1_loss})
-            if ((epoch % 1000) == 0) and (epoch != 0):
-                save_checkpoint({
-                    'epoch': epoch + 1,
-                    'arch': "YOLOv1",
-                    'state_dict': model.state_dict(),
-                    'optimizer': optimizer.state_dict(),
-                }, False, filename=os.path.join(checkpoint_path, 'checkpoint_{}.pth.tar'.format(epoch)))
+                    wandb.log({'total_loss': loss.item(), 'obj_coord1_loss': obj_coord1_loss, 'obj_size1_loss': obj_size1_loss,
+                            'obj_class_loss': obj_class_loss, 'noobjness1_loss': noobjness1_loss, 'objness1_loss': objness1_loss})
+
+        if not USE_GITHASH:
+            short_sha = 'noHash'
+
+        # if ((epoch % 1000) == 0) and (epoch != 0):
+        if ((epoch % 1000) == 0):
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'arch': "YOLOv1",
+                'state_dict': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+            }, False, filename=os.path.join(checkpoint_path, 'ckpt_{}_ep{:05d}_loss{:.04f}_lr{}.pth.tar'.format(short_sha, epoch, loss.item(), ([param_group['lr'] for param_group in optimizer.param_groups])[0])))
+
