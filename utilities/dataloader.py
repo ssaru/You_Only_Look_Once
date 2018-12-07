@@ -54,8 +54,8 @@ def detection_collate(batch):
 
             # can be acuqire grid (x,y) index when divide (1/S) of x_ratio
             scale_factor = (1 / 7)
-            grid_x_index = min(int(x_ratio // scale_factor), 6)
-            grid_y_index = min(int(y_ratio // scale_factor), 6)
+            grid_x_index = int(x_ratio // scale_factor)
+            grid_y_index = int(y_ratio // scale_factor)
             x_offset = (x_ratio / scale_factor) - grid_x_index
             y_offset = (y_ratio / scale_factor) - grid_y_index
 
