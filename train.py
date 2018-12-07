@@ -139,7 +139,6 @@ def train(params):
 
             if USE_GTCHECKER:
                 visualize_GT(images, labels, class_list)
-                exit()
 
             images = images.to(device)
             labels = labels.to(device)
