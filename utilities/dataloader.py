@@ -66,6 +66,7 @@ def detection_collate(batch):
 
         label = torch.from_numpy(np_label)
         targets.append(label)
+
     return torch.stack(imgs, 0), torch.stack(targets, 0), sizes
 
 

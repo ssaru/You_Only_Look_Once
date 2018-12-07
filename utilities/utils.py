@@ -109,7 +109,7 @@ def GetYoloStyleBBoxes(normed_lxywhs, bbs_aug, image_width, image_height):
     for i in range(len(bbs_aug.bounding_boxes)):
         after = bbs_aug.bounding_boxes[i]
         coord = CvtCoordsXXYY2XYWH(image_width, image_height, xmin=after.x1, xmax=after.x2, ymin=after.y1, ymax=after.y2)
-        normed_bbs_aug.append([normed_lxywhs[i][0], round(coord[0], 3), round(coord[1], 3), round(coord[2], 3), round(coord[3], 3)])
+        normed_bbs_aug.append([normed_lxywhs[i][0], coord[0], coord[1], coord[2], coord[3]])
 
     return normed_bbs_aug
 
