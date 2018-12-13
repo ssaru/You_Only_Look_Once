@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 import numpy as np
 from utilities.utils import CvtCoordsXXYY2XYWH
 from utilities.utils import CvtCoordsXYWH2XXYY
