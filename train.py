@@ -114,7 +114,6 @@ def train(params):
     else:
         model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
 
-
     if USE_SUMMARY:
         summary(model, (3, 448, 448))
 
@@ -128,7 +127,7 @@ def train(params):
     total_train_step = num_epochs * total_step
 
     # for epoch in range(num_epochs):
-    for epoch in range(1, num_epochs+1):
+    for epoch in range(1, num_epochs + 1):
 
         if (epoch == 200) or (epoch == 400) or (epoch == 600) or (epoch == 20000) or (epoch == 30000):
             scheduler.step()
@@ -190,4 +189,3 @@ def train(params):
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
             }, False, filename=os.path.join(checkpoint_path, 'ckpt_{}_ep{:05d}_loss{:.04f}_lr{}.pth.tar'.format(short_sha, epoch, loss.item(), ([param_group['lr'] for param_group in optimizer.param_groups])[0])))
-

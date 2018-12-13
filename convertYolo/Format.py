@@ -274,7 +274,6 @@ class VOC:
                 }
 
                 if obj_index != 0:
-
                     data[filename.split(".")[0]] = annotation
 
                 printProgressBar(progress_cnt + 1, progress_length, prefix='VOC Parsing:'.ljust(15), suffix='Complete', length=40)
