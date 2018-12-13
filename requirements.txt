@@ -8,3 +8,4 @@ imgaug
 pillow
 matplotlib
 visdom
+googledrivedownloader
