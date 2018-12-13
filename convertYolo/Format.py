@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 import sys
 import os
 import csv
@@ -13,15 +15,15 @@ from xml.etree.ElementTree import dump
 # Common Data format
 """
 {
-    "filename" :      
-                {                  
+    "filename" :
+                {
                     "size" :
                                 {
                                     "width" : <string>
                                     "height" : <string>
                                     "depth" : <string>
                                 }
-                
+
                     "objects" :
                                 {
                                     "num_obj" : <int>
@@ -37,8 +39,8 @@ from xml.etree.ElementTree import dump
                                                                 }
                                                 }
                                     ...
-                
-                
+
+
                                 }
                 }
 """
@@ -51,7 +53,8 @@ from xml.etree.ElementTree import dump
 }
 """
 
-def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+
+def printProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█'):
     """
     Call in a loop to create terminal progress bar
     @params:
@@ -66,10 +69,11 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = fill * filledLength + '-' * (length - filledLength)
-    print('\r%s|%s| %s%% (%s/%s)  %s' % (prefix, bar, percent, iteration, total, suffix), end = '\r')
+    print('\r%s|%s| %s%% (%s/%s)  %s' % (prefix, bar, percent, iteration, total, suffix), end='\r')
     # Print New Line on Complete
     if iteration == total:
         print("\n")
+
 
 class VOC:
     """
@@ -228,7 +232,7 @@ class VOC:
             for filename in filenames:
 
                 xml = open(os.path.join(dir_path, filename), "r")
-    
+
                 tree = Et.parse(xml)
                 root = tree.getroot()
 
@@ -247,7 +251,7 @@ class VOC:
                 obj = {
                     "num_obj": len(objects)
                 }
-    
+
                 obj_index = 0
                 for _object in objects:
 
@@ -264,7 +268,6 @@ class VOC:
                     }
                     tmp["bndbox"] = bndbox
 
-
                     obj[str(obj_index)] = tmp
                     obj_index += 1
 
@@ -274,7 +277,6 @@ class VOC:
                 }
 
                 if obj_index != 0:
-
                     data[filename.split(".")[0]] = annotation
 
                 printProgressBar(progress_cnt + 1, progress_length, prefix='VOC Parsing:'.ljust(15), suffix='Complete', length=40)
@@ -369,7 +371,6 @@ class COCO:
                 printProgressBar(progress_cnt + 1, progress_length, prefix='COCO Parsing:'.ljust(15), suffix='Complete', length=40)
                 progress_cnt += 1
 
-            #print(json.dumps(data, indent=4, sort_keys = True))
             return True, data
 
         except Exception as e:
@@ -380,6 +381,7 @@ class COCO:
             msg = "ERROR : {}, moreInfo : {}\t{}\t{}".format(e, exc_type, fname, exc_tb.tb_lineno)
 
             return False, msg
+
 
 class UDACITY:
     """
@@ -403,7 +405,6 @@ class UDACITY:
             data = {}
 
             for line in csv_f:
-
 
                 raw_line = line[0].split(" ")
                 raw_line_length = len(raw_line)
@@ -472,6 +473,7 @@ class UDACITY:
 
             return False, msg
 
+
 class KITTI:
     """
     Handler Class for UDACITY Format
@@ -528,17 +530,17 @@ class KITTI:
                             "ymax": float(ymax)
                         }
 
-                        bboxGroups.write("{} {} {} {}\n".format(float(xmin), float(ymin), float(xmax)-float(xmin), float(ymax)-float(ymin)))
+                        bboxGroups.write("{} {} {} {}\n".format(float(xmin), float(ymin), float(xmax) - float(xmin), float(ymax) - float(ymin)))
 
                         obj_info = {
                             "name": name,
                             "bndbox": bndbox
                         }
 
-                        obj[str(obj_cnt)] =obj_info
+                        obj[str(obj_cnt)] = obj_info
                         obj_cnt += 1
 
-                    obj["num_obj"] =  obj_cnt
+                    obj["num_obj"] = obj_cnt
 
                     data[filename] = {
                         "size": size,
@@ -560,6 +562,7 @@ class KITTI:
 
             return False, msg
 
+
 class YOLO:
     """
     Handler Class for UDACITY Format
@@ -567,12 +570,11 @@ class YOLO:
 
     def __init__(self, cls_list_path):
         with open(cls_list_path, 'r') as file:
-            l = file.read().splitlines()
+            cls_list = file.read().splitlines()
 
-        self.cls_list = l
+        self.cls_list = cls_list
 
-
-    def coordinateCvt2YOLO(self,size, box):
+    def coordinateCvt2YOLO(self, size, box):
         dw = 1. / size[0]
         dh = 1. / size[1]
 
@@ -590,7 +592,7 @@ class YOLO:
         w = w * dw
         y = y * dh
         h = h * dh
-        return (round(x,3), round(y,3), round(w,3), round(h,3))
+        return (round(x, 3), round(y, 3), round(w, 3), round(h, 3))
 
     def parse(self, label_path, img_path, img_type=".png"):
         try:
@@ -645,16 +647,15 @@ class YOLO:
                         "ymax": float(ymax)
                     }
 
-
                     obj_info = {
                         "name": name_id,
                         "bndbox": bndbox
                     }
 
-                    obj[str(obj_cnt)] =obj_info
+                    obj[str(obj_cnt)] = obj_info
                     obj_cnt += 1
 
-                obj["num_obj"] =  obj_cnt
+                obj["num_obj"] = obj_cnt
 
                 data[filename] = {
                     "size": size,
@@ -680,7 +681,7 @@ class YOLO:
 
         try:
 
-            progress_length =len(data)
+            progress_length = len(data)
             progress_cnt = 0
             printProgressBar(0, progress_length, prefix='\nYOLO Generating:'.ljust(15), suffix='Complete', length=40)
 
@@ -740,7 +741,6 @@ class YOLO:
 
                     with open(os.path.abspath(os.path.join(save_path, "".join([key, ".txt"]))), "w") as output_txt_file:
                         output_txt_file.write(data[key])
-
 
                     printProgressBar(progress_cnt + 1, progress_length, prefix='YOLO Saving:'.ljust(15),
                                      suffix='Complete',

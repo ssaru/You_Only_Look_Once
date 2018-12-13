@@ -1,4 +1,4 @@
-pip install pycodestyle -y
+pip3 install pycodestyle
 
 if [ -f "pre-commit" ];then
 rm pre-commit

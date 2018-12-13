@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 import os
 import argparse
 import time
@@ -18,6 +20,7 @@ parser.add_argument('--cls_list_file', type=str, help='directory of *.names file
 
 
 args = parser.parse_args()
+
 
 def main():
     pp = pprint.PrettyPrinter(indent=4)
@@ -44,7 +47,7 @@ def main():
         kitti = KITTI()
         result, data = kitti.parse(label_path, img_path, img_type=img_type)
     elif datasets == "YOLO":
-        yolo =YOLO(os.path.abspath(cls_list))
+        yolo = YOLO(os.path.abspath(cls_list))
         result, data = yolo.parse(label_path, img_path, img_type=img_type)
 
     cnt = 0
@@ -67,12 +70,12 @@ def main():
                 x1 = data[key]["objects"][str(idx)]["bndbox"]["xmax"]
                 y1 = data[key]["objects"][str(idx)]["bndbox"]["ymax"]
 
-                draw.rectangle(((x0,y0), (x1,y1)), outline='#00ff88')
-                draw.text((x0,y0), data[key]["objects"][str(idx)]["name"])
+                draw.rectangle(((x0, y0), (x1, y1)), outline='#00ff88')
+                draw.text((x0, y0), data[key]["objects"][str(idx)]["name"])
 
             del draw
             print("===============================================================================================\n\n")
-            plt.figure(figsize=(20,10))
+            plt.figure(figsize=(20, 10))
             plt.imshow(im)
 
             plt.savefig("".join([str(cnt), ".png"]))
@@ -85,6 +88,7 @@ def main():
 
     else:
         print("return value : {}, msg : {}, args: {}".format(result, data, args))
+
 
 if __name__ == '__main__':
     main()
