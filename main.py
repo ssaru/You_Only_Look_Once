@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 import argparse
 
 from train import train

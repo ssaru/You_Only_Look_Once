@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 import os
 from xml.etree.ElementTree import dump
 import json
@@ -20,6 +22,7 @@ parser.add_argument('--cls_list_file', type=str, help='directory of *.names file
 
 args = parser.parse_args()
 
+
 def main(config):
 
     if config["datasets"] == "VOC":
@@ -28,23 +31,21 @@ def main(config):
 
         flag, data = voc.parse(config["label"])
 
-        if flag == True:
+        if flag:
 
             flag, data = yolo.generate(data)
-            if flag == True:
-                flag, data = yolo.save(data, config["output_path"], config["img_path"] ,
+            if flag:
+                flag, data = yolo.save(data, config["output_path"], config["img_path"],
                                        config["img_type"], config["manipast_path"])
 
-                if flag == False:
+                if not flag:
                     print("Saving Result : {}, msg : {}".format(flag, data))
 
             else:
                 print("YOLO Generating Result : {}, msg : {}".format(flag, data))
 
-
         else:
             print("VOC Parsing Result : {}, msg : {}".format(flag, data))
-
 
     elif config["datasets"] == "COCO":
         coco = COCO()
@@ -52,14 +53,14 @@ def main(config):
 
         flag, data = coco.parse(config["label"])
 
-        if flag == True:
+        if flag:
             flag, data = yolo.generate(data)
 
-            if flag == True:
+            if flag:
                 flag, data = yolo.save(data, config["output_path"], config["img_path"],
                                         config["img_type"], config["manipast_path"])
 
-                if flag == False:
+                if not flag:
                     print("Saving Result : {}, msg : {}".format(flag, data))
 
             else:
@@ -74,14 +75,14 @@ def main(config):
 
         flag, data = udacity.parse(config["label"])
 
-        if flag == True:
+        if flag:
             flag, data = yolo.generate(data)
 
-            if flag == True:
+            if flag:
                 flag, data = yolo.save(data, config["output_path"], config["img_path"],
                                        config["img_type"], config["manipast_path"])
 
-                if flag == False:
+                if not flag:
                     print("Saving Result : {}, msg : {}".format(flag, data))
 
             else:
@@ -96,14 +97,14 @@ def main(config):
 
         flag, data = kitti.parse(config["label"], config["img_path"], img_type=config["img_type"])
 
-        if flag == True:
+        if flag:
             flag, data = yolo.generate(data)
 
-            if flag == True:
+            if flag:
                 flag, data = yolo.save(data, config["output_path"], config["img_path"],
                                        config["img_type"], config["manipast_path"])
 
-                if flag == False:
+                if flag:
                     print("Saving Result : {}, msg : {}".format(flag, data))
 
             else:
@@ -115,9 +116,10 @@ def main(config):
     else:
         print("Unkwon Datasets")
 
+
 if __name__ == '__main__':
 
-    config ={
+    config = {
         "datasets": args.datasets,
         "img_path": args.img_path,
         "label": args.label,
