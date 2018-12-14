@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 import numpy as np
 import torch
 import imgaug as ia
@@ -109,7 +111,7 @@ def GetYoloStyleBBoxes(normed_lxywhs, bbs_aug, image_width, image_height):
     for i in range(len(bbs_aug.bounding_boxes)):
         after = bbs_aug.bounding_boxes[i]
         coord = CvtCoordsXXYY2XYWH(image_width, image_height, xmin=after.x1, xmax=after.x2, ymin=after.y1, ymax=after.y2)
-        normed_bbs_aug.append([normed_lxywhs[i][0], round(coord[0], 3), round(coord[1], 3), round(coord[2], 3), round(coord[3], 3)])
+        normed_bbs_aug.append([normed_lxywhs[i][0], coord[0], coord[1], coord[2], coord[3]])
 
     return normed_bbs_aug
 
@@ -156,11 +158,11 @@ def visualize_GT(images, labels, cls_list):
             draw.line(line, fill="red")
 
         obj_coord = label[:, :, 0]
-        cls = label[:, :, 1]
-        x_shift = label[:, :, 2]
-        y_shift = label[:, :, 3]
-        w_ratio = label[:, :, 4]
-        h_ratio = label[:, :, 5]
+        x_shift = label[:, :, 1]
+        y_shift = label[:, :, 2]
+        w_ratio = label[:, :, 3]
+        h_ratio = label[:, :, 4]
+        cls = label[:, :, 5]
 
         for i in range(7):
             for j in range(7):

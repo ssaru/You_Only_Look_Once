@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 import os
 import torch
 import yolov1
@@ -7,6 +9,8 @@ import numpy as np
 from torchvision import transforms
 from torchsummary.torchsummary import summary
 from PIL import Image, ImageDraw
+
+np.set_printoptions(precision=4, suppress=True)
 
 
 def test(params):
@@ -26,7 +30,8 @@ def test(params):
     with open(class_path) as f:
         class_list = f.read().splitlines()
 
-    objness_threshold = 0.15
+    objness_threshold = 0.3
+    class_threshold = 0.3
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -78,14 +83,25 @@ def test(params):
         outputs = outputs.view(w, h, c)
         outputs_np = outputs.cpu().data.numpy()
 
-        outputs[:, :, 0] = torch.sigmoid(outputs[:, :, 0])
-        outputs[:, :, 5:] = torch.sigmoid(outputs[:, :, 5:])
+        objness = outputs[:, :, 0].unsqueeze(-1).cpu().data.numpy()
 
-        objness = outputs[:, :, 0].cpu().data.numpy()
+        cls_map = outputs[:, :, 5:].cpu().data.numpy()
+
+        print("obj : {}".format(objness.shape))
+        print("cls : {}".format(cls_map.shape))
+
+        threshold_map = np.multiply(objness, cls_map)
 
         print("OBJECTNESS : {}".format(objness.shape))
         print(objness)
         print("\n\n\n")
+        print("CLS MAP : {}".format(cls_map.shape))
+        print(cls_map[0])
+        print("\n\n\n")
+        print("MULTIPLICATION : {}".format(threshold_map.shape))
+        print(threshold_map[:, :, 0])
+        print("\n\n\n")
+
         print("IMAGE SIZE")
         print("width : {}, height : {}".format(W, H))
         print("\n\n\n\n")
@@ -119,14 +135,16 @@ def test(params):
                         xmax = xmin + width
                         ymax = ymin + height
 
-                        clsprob = block[5:]
+                        clsprob = block[5:] * objness[i][j]
                         cls_idx = np.argmax(clsprob)
 
-                        draw.rectangle(((xmin, ymin), (xmax, ymax)), outline="blue")
-                        draw.text((xmin, ymin), class_list[cls_idx])
-                        draw.ellipse(((center_x - 2, center_y - 2),
-                                      (center_x + 2, center_y + 2)),
-                                     fill='blue')
+                        if clsprob[cls_idx] > class_threshold:
+
+                            draw.rectangle(((xmin + 2, ymin + 2), (xmax - 2, ymax - 2)), outline="blue")
+                            draw.text((xmin + 5, ymin + 5), "{}: {:.2f}".format(class_list[cls_idx], clsprob[cls_idx]))
+                            draw.ellipse(((center_x - 2, center_y - 2),
+                                          (center_x + 2, center_y + 2)),
+                                         fill='blue')
 
                         # LOG
                         print("idx : [{}][{}]".format(i, j))

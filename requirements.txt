@@ -1,0 +1,11 @@
+setuptools
+numpy
+torch
+torchvision
+gitpython
+wandb
+imgaug
+pillow
+matplotlib
+visdom
+googledrivedownloader
