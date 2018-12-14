@@ -20,6 +20,12 @@ main.py --mode train -data_path where/your/dataset/is --class_path ./names/VOC.n
 main.py  --mode test --data_path where/your/dataset/is --class_path ./names/VOC.names --num_class 20 --checkpoint_path your_checkpoint.pth.tar
 ```
 
+#### pre-built weights file
+```python
+python3 utilities/download_checkpoint.py
+```
+[pre-build weights donwload](https://drive.google.com/open?id=1lgpHENZm2HGhEVHAIX4mK_ATSU_ujeqy)
+
 ## Supported Datasets
 Only Pascal VOC datasets are supported for now.
 
@@ -52,6 +58,8 @@ Only Pascal VOC datasets are supported for now.
 ![image](https://user-images.githubusercontent.com/15168540/49991795-86341300-ffc5-11e8-9d29-1ed601789bc4.png)
 ![image](https://user-images.githubusercontent.com/15168540/49991804-8cc28a80-ffc5-11e8-997d-f3a6a4a027fb.png)
 
+**Train Log**
+![train_log](https://user-images.githubusercontent.com/13328380/50018219-dd5fd500-0011-11e9-9040-86222c91d5c6.png)
 
 ## Authorship
 This project is equally contributed by [Chanhee Jeong](https://github.com/chjeong530), [Donghyeon Hwang](https://github.com/ssaru), and [Jaewon Lee](https://github.com/insurgent92).
