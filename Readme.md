@@ -52,14 +52,15 @@ Only Pascal VOC datasets are supported for now.
 |--use_githash     |bool |use githash             |False|
 |--num_class       |int  |number of classes       |5    |
 
+## Train Log
+![train_log](https://user-images.githubusercontent.com/13328380/50018219-dd5fd500-0011-11e9-9040-86222c91d5c6.png)
+
 ## Results 
 ![image](https://user-images.githubusercontent.com/15168540/49991740-61d83680-ffc5-11e8-8912-096033351060.png)
 ![image](https://user-images.githubusercontent.com/15168540/49991762-71f01600-ffc5-11e8-9b65-6e3aec0c7504.png)
 ![image](https://user-images.githubusercontent.com/15168540/49991795-86341300-ffc5-11e8-9d29-1ed601789bc4.png)
 ![image](https://user-images.githubusercontent.com/15168540/49991804-8cc28a80-ffc5-11e8-997d-f3a6a4a027fb.png)
 
-**Train Log**
-![train_log](https://user-images.githubusercontent.com/13328380/50018219-dd5fd500-0011-11e9-9040-86222c91d5c6.png)
 
 ## Authorship
 This project is equally contributed by [Chanhee Jeong](https://github.com/chjeong530), [Donghyeon Hwang](https://github.com/ssaru), and [Jaewon Lee](https://github.com/insurgent92).
