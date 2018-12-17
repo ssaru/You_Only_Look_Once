@@ -17,6 +17,7 @@ parser.add_argument('--num_epochs', type=int, help='number of epochs', default=1
 parser.add_argument('--learning_rate', type=float, help='initial learning rate', default=1e-3)
 parser.add_argument('--dropout', type=float, help='dropout probability', default=0.5)
 parser.add_argument('--num_gpus', type=int, help='number of GPUs to use for training', default=1)
+parser.add_argument('--num_boxes', type=int, help='number of boxes to use for training or testing', default=2)
 parser.add_argument('--checkpoint_path', type=str, help='path to a specific checkpoint to load', default='./')
 
 # flag
@@ -45,6 +46,7 @@ def main():
         "lr": args.learning_rate,
         "dropout": args.dropout,
         "num_gpus": args.num_gpus,
+        "num_boxes": args.num_boxes,
         "checkpoint_path": args.checkpoint_path,
 
         "use_visdom": args.use_visdom,

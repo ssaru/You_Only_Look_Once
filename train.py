@@ -20,7 +20,6 @@ from utilities.utils import create_vis_plot
 from utilities.utils import update_vis_plot
 from utilities.utils import visualize_GT
 from utilities.augmentation import Augmenter
-from yolov1 import detection_loss_4_yolo
 from imgaug import augmenters as iaa
 
 warnings.filterwarnings("ignore")
@@ -72,10 +71,17 @@ def train(params):
         vis_title = 'Yolo V1 Deepbaksu_vision (feat. martin, visionNoob) PyTorch on ' + 'VOC'
         vis_legend = ['Train Loss']
         iter_plot = create_vis_plot(viz, 'Iteration', 'Total Loss', vis_title, vis_legend)
+
+        objectness1_plot = create_vis_plot(viz, 'Iteration', 'objectness1', vis_title, vis_legend)
+        noobjectness1_plot = create_vis_plot(viz, 'Iteration', 'noobjectness1', vis_title, vis_legend)
         coord1_plot = create_vis_plot(viz, 'Iteration', 'coord1', vis_title, vis_legend)
         size1_plot = create_vis_plot(viz, 'Iteration', 'size1', vis_title, vis_legend)
-        noobjectness1_plot = create_vis_plot(viz, 'Iteration', 'noobjectness1', vis_title, vis_legend)
-        objectness1_plot = create_vis_plot(viz, 'Iteration', 'objectness1', vis_title, vis_legend)
+
+        objectness2_plot = create_vis_plot(viz, 'Iteration', 'objectness2', vis_title, vis_legend)
+        noobjectness2_plot = create_vis_plot(viz, 'Iteration', 'noobjectness2', vis_title, vis_legend)
+        coord2_plot = create_vis_plot(viz, 'Iteration', 'coord2', vis_title, vis_legend)
+        size2_plot = create_vis_plot(viz, 'Iteration', 'size2', vis_title, vis_legend)
+
         obj_cls_plot = create_vis_plot(viz, 'Iteration', 'obj_cls', vis_title, vis_legend)
 
     # 2. Data augmentation setting
@@ -108,7 +114,6 @@ def train(params):
 
     # 5. Load YOLOv1
     net = yolov1.YOLOv1(params={"dropout": dropout, "num_class": num_class})
-    # model = torch.nn.DataParallel(net, device_ids=num_gpus).cuda()
 
     print("device : ", device)
     if device.type == 'cpu':
@@ -128,7 +133,6 @@ def train(params):
 
     total_train_step = num_epochs * total_step
 
-    # for epoch in range(num_epochs):
     for epoch in range(1, num_epochs + 1):
 
         if (epoch == 200) or (epoch == 400) or (epoch == 600) or (epoch == 20000) or (epoch == 30000):
@@ -149,12 +153,16 @@ def train(params):
 
             # Calc Loss
             loss, \
+            objness1_loss, \
+            noobjness1_loss, \
             obj_coord1_loss, \
             obj_size1_loss, \
+            objness2_loss, \
+            noobjness2_loss, \
+            obj_coord2_loss, \
+            obj_size2_loss, \
             obj_class_loss, \
-            noobjness1_loss, \
-            objness1_loss = detection_loss_4_yolo(outputs, labels, device.type)
-            # objness1_loss = detection_loss_4_yolo(outputs, labels)
+                = net.detection_loss_4_yolo(outputs, labels, device.type)
 
             # Backward and optimize
             optimizer.zero_grad()
@@ -170,21 +178,44 @@ def train(params):
 
                 if USE_VISDOM:
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), loss.item(), iter_plot, None, 'append')
+
+                    # first box loss plot
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_coord1_loss, coord1_plot, None, 'append')
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_size1_loss, size1_plot, None, 'append')
+
+                    # second box loss plot
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness2_loss, objectness2_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness2_loss, noobjectness2_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_coord2_loss, coord2_plot, None, 'append')
+                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_size2_loss, size2_plot, None, 'append')
+
+                    # class loss plot
                     update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), obj_class_loss, obj_cls_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), noobjness1_loss, noobjectness1_plot, None, 'append')
-                    update_vis_plot(viz, (epoch + 1) * total_step + (i + 1), objness1_loss, objectness1_plot, None, 'append')
 
                 if USE_WANDB:
-                    wandb.log({'total_loss': loss.item(), 'obj_coord1_loss': obj_coord1_loss, 'obj_size1_loss': obj_size1_loss,
-                            'obj_class_loss': obj_class_loss, 'noobjness1_loss': noobjness1_loss, 'objness1_loss': objness1_loss})
+                    wandb.log({'total_loss': loss.item(),
+                                # first box
+                               'objness1_loss': objness1_loss,
+                               'noobjness1_loss': noobjness1_loss,
+                               'obj_coord1_loss': obj_coord1_loss,
+                               'obj_size1_loss': obj_size1_loss,
+                               # second box
+                               'objness2_loss': objness2_loss,
+                               'noobjness2_loss': noobjness2_loss,
+                               'obj_coord2_loss': obj_coord2_loss,
+                               'obj_size2_loss': obj_size2_loss,
+                               # class
+                               'obj_class_loss': obj_class_loss,
+
+                               })
 
         if not USE_GITHASH:
             short_sha = 'noHash'
 
         # if ((epoch % 1000) == 0) and (epoch != 0):
-        if ((epoch % 1000) == 0):
+        if ((epoch % 100) == 0):
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': "YOLOv1",
