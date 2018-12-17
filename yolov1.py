@@ -20,6 +20,7 @@ class YOLOv1(nn.Module):
 
         self.dropout_prop = params["dropout"]
         self.num_classes = params["num_class"]
+        self.num_boxes = int(params["num_boxes"])
 
         super(YOLOv1, self).__init__()
         # LAYER 1
@@ -141,7 +142,7 @@ class YOLOv1(nn.Module):
         )
 
         self.fc2 = nn.Sequential(
-            nn.Linear(4096, 7 * 7 * ((5) + self.num_classes))
+            nn.Linear(4096, 7 * 7 * ((5 * self.num_boxes) + self.num_classes))
         )
 
         for m in self.modules():
@@ -180,68 +181,97 @@ class YOLOv1(nn.Module):
         out = out.reshape(out.size(0), -1)
         out = self.fc1(out)
         out = self.fc2(out)
-        out = out.reshape((-1, 7, 7, ((5) + self.num_classes)))
+        out = out.reshape((-1, 7, 7, ((5 * self.num_boxes) + self.num_classes)))
         out[:, :, :, 0] = torch.sigmoid(out[:, :, :, 0])  # sigmoid to objness1_output
-        out[:, :, :, 5:] = torch.sigmoid(out[:, :, :, 5:])  # sigmoid to class_output
+        out[:, :, :, 5:] = torch.sigmoid(out[:, :, :, (5 * self.num_boxes):])  # sigmoid to class_output
 
         return out
 
+    # def detection_loss_4_yolo(output, target):
+    def detection_loss_4_yolo(self, output, target, device):
+        from utilities.utils import one_hot
 
-# def detection_loss_4_yolo(output, target):
-def detection_loss_4_yolo(output, target, device):
-    from utilities.utils import one_hot
+        # hyper parameter
 
-    # hyper parameter
+        lambda_coord = 5
+        lambda_noobj = 0.5
 
-    lambda_coord = 5
-    lambda_noobj = 0.5
+        # check batch size
+        b, _, _, _ = target.shape
+        _, _, _, n = output.shape
 
-    # check batch size
-    b, _, _, _ = target.shape
-    _, _, _, n = output.shape
+        # output tensor slice
+        # output tensor shape is [batch, 7, 7, 5 + classes]
 
-    # output tensor slice
-    # output tensor shape is [batch, 7, 7, 5 + classes]
-    objness1_output = output[:, :, :, 0]
-    x_offset1_output = output[:, :, :, 1]
-    y_offset1_output = output[:, :, :, 2]
-    width_ratio1_output = output[:, :, :, 3]
-    height_ratio1_output = output[:, :, :, 4]
-    class_output = output[:, :, :, 5:]
+        objness1_output = output[:, :, :, 0]
+        x_offset1_output = output[:, :, :, 1]
+        y_offset1_output = output[:, :, :, 2]
+        width_ratio1_output = output[:, :, :, 3]
+        height_ratio1_output = output[:, :, :, 4]
 
-    num_cls = class_output.shape[-1]
+        objness2_output = output[:, :, :, 5]
+        x_offset2_output = output[:, :, :, 6]
+        y_offset2_output = output[:, :, :, 7]
+        width_ratio2_output = output[:, :, :, 8]
+        height_ratio2_output = output[:, :, :, 9]
 
-    # label tensor slice
-    objness_label = target[:, :, :, 0]
-    x_offset_label = target[:, :, :, 1]
-    y_offset_label = target[:, :, :, 2]
-    width_ratio_label = target[:, :, :, 3]
-    height_ratio_label = target[:, :, :, 4]
-    class_label = one_hot(class_output, target[:, :, :, 5], device)
+        class_output = output[:, :, :, (5 * self.num_boxes):]
 
-    noobjness_label = torch.neg(torch.add(objness_label, -1))
+        num_cls = class_output.shape[-1]
 
-    obj_coord1_loss = lambda_coord * \
-                      torch.sum(objness_label *
-                        (torch.pow(x_offset1_output - x_offset_label, 2) +
-                                    torch.pow(y_offset1_output - y_offset_label, 2)))
+        # label tensor slice
+        objness_label = target[:, :, :, 0]
+        x_offset_label = target[:, :, :, 1]
+        y_offset_label = target[:, :, :, 2]
+        width_ratio_label = target[:, :, :, 3]
+        height_ratio_label = target[:, :, :, 4]
+        class_label = one_hot(class_output, target[:, :, :, 5], device)
 
-    obj_size1_loss = lambda_coord * \
-                     torch.sum(objness_label *
-                               (torch.pow(width_ratio1_output - torch.sqrt(width_ratio_label), 2) +
-                                torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
+        noobjness_label = torch.neg(torch.add(objness_label, -1))
 
-    objectness_cls_map = objness_label.unsqueeze(-1)
+        objectness_cls_map = objness_label.unsqueeze(-1)
 
-    for i in range(num_cls - 1):
-        objectness_cls_map = torch.cat((objectness_cls_map, objness_label.unsqueeze(-1)), 3)
+        for i in range(num_cls - 1):
+            objectness_cls_map = torch.cat((objectness_cls_map, objness_label.unsqueeze(-1)), 3)
 
-    obj_class_loss = torch.sum(objectness_cls_map * torch.pow(class_output - class_label, 2))
+        # calc loss
+        obj_coord1_loss = lambda_coord * \
+                          torch.sum(objness_label *
+                            (torch.pow(x_offset1_output - x_offset_label, 2) +
+                                        torch.pow(y_offset1_output - y_offset_label, 2)))
 
-    noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness1_output - objness_label, 2))
-    objness1_loss = torch.sum(objness_label * torch.pow(objness1_output - objness_label, 2))
+        obj_coord2_loss = lambda_coord * \
+                          torch.sum(objness_label *
+                                    (torch.pow(x_offset2_output - x_offset_label, 2) +
+                                     torch.pow(y_offset2_output - y_offset_label, 2)))
 
-    total_loss = (obj_coord1_loss + obj_size1_loss + noobjness1_loss + objness1_loss + obj_class_loss)
-    total_loss = total_loss / b
+        obj_size1_loss = lambda_coord * \
+                         torch.sum(objness_label *
+                                   (torch.pow(width_ratio1_output - torch.sqrt(width_ratio_label), 2) +
+                                    torch.pow(height_ratio1_output - torch.sqrt(height_ratio_label), 2)))
 
-    return total_loss, obj_coord1_loss / b, obj_size1_loss / b, obj_class_loss / b, noobjness1_loss / b, objness1_loss / b
+        obj_size2_loss = lambda_coord * \
+                         torch.sum(objness_label *
+                                   (torch.pow(width_ratio2_output - torch.sqrt(width_ratio_label), 2) +
+                                    torch.pow(height_ratio2_output - torch.sqrt(height_ratio_label), 2)))
+
+        noobjness1_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness1_output - objness_label, 2))
+
+        noobjness2_loss = lambda_noobj * torch.sum(noobjness_label * torch.pow(objness2_output - objness_label, 2))
+
+        objness1_loss = torch.sum(objness_label * torch.pow(objness1_output - objness_label, 2))
+
+        objness2_loss = torch.sum(objness_label * torch.pow(objness2_output - objness_label, 2))
+
+        obj_class_loss = torch.sum(objectness_cls_map * torch.pow(class_output - class_label, 2))
+
+        total_loss = (obj_coord1_loss + obj_size1_loss + noobjness1_loss + objness1_loss +
+                      obj_coord2_loss + obj_size2_loss + noobjness2_loss + objness2_loss +
+                      obj_class_loss)
+
+        total_loss = total_loss / b
+
+        return total_loss, \
+               objness1_loss / b, noobjness1_loss / b, obj_coord1_loss / b, obj_size1_loss / b, \
+               objness2_loss / b, noobjness2_loss / b, obj_coord2_loss / b, obj_size2_loss / b,  \
+               obj_class_loss / b,
