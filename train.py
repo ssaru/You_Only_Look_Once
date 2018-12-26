@@ -41,6 +41,7 @@ def train(params):
     learning_rate = params["lr"]
     dropout = params["dropout"]
     num_gpus = [i for i in range(params["num_gpus"])]
+    num_boxes = params["num_boxes"]
     checkpoint_path = params["checkpoint_path"]
 
     USE_VISDOM = params["use_visdom"]
@@ -113,7 +114,7 @@ def train(params):
                                                collate_fn=detection_collate)
 
     # 5. Load YOLOv1
-    net = yolov1.YOLOv1(params={"dropout": dropout, "num_class": num_class})
+    net = yolov1.YOLOv1(params={"dropout": dropout, "num_class": num_class, "num_boxes": num_boxes})
 
     print("device : ", device)
     if device.type == 'cpu':

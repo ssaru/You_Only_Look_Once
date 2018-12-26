@@ -22,7 +22,7 @@ class YOLOv1(nn.Module):
 
         self.dropout_prop = params["dropout"]
         self.num_classes = params["num_class"]
-        self.num_boxes = int(params["num_boxes"])
+        self.num_boxes = params["num_boxes"]
 
         super(YOLOv1, self).__init__()
         # LAYER 1
@@ -184,12 +184,14 @@ class YOLOv1(nn.Module):
         out = self.fc1(out)
         out = self.fc2(out)
         out = out.reshape((-1, 7, 7, ((5 * self.num_boxes) + self.num_classes)))
-        out[:, :, :, 0] = torch.sigmoid(out[:, :, :, 0])  # sigmoid to objness1_output
-        out[:, :, :, 5:] = torch.sigmoid(out[:, :, :, (5 * self.num_boxes):])  # sigmoid to class_output
+
+        # apply sigmoid
+        out[:, :, :, 0] = torch.sigmoid(out[:, :, :, 0])
+        out[:, :, :, 5] = torch.sigmoid(out[:, :, :, 5])
+        out[:, :, :, (5 * self.num_boxes):] = torch.sigmoid(out[:, :, :, (5 * self.num_boxes):])
 
         return out
 
-    # def detection_loss_4_yolo(output, target):
     def detection_loss_4_yolo(self, output, target, device):
         from utilities.utils import one_hot
 
